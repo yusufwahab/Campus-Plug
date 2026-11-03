@@ -1,0 +1,85 @@
+@import "@fontsource-variable/bricolage-grotesque";
+@import "@fontsource-variable/dm-sans";
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #10251d;
+  --color-forest: #163a2c;
+  --color-lime: #c9f26c;
+  --color-lime-dark: #b4de52;
+  --color-ground: #f4f6ef;
+  --color-white: #ffffff;
+  --color-line: #dde3d6;
+  --color-muted: #56675e;
+
+  --color-peach: #ffd9c7;
+  --color-lilac: #e3d8ff;
+  --color-sky: #cfe6ff;
+  --color-butter: #ffe99a;
+  --color-mint: #cdefd8;
+
+  --color-verified-bg: #e6f8be;
+  --color-verified-fg: #163a2c;
+  --color-pending-bg: #ffebc2;
+  --color-pending-fg: #6b4200;
+  --color-info-bg: #d9ecff;
+  --color-info-fg: #0f4c81;
+  --color-danger-bg: #ffe0d7;
+  --color-danger-fg: #a32a12;
+
+  --font-heading: "Bricolage Grotesque Variable", "Bricolage Grotesque", system-ui, sans-serif;
+  --font-sans: "DM Sans Variable", "DM Sans", system-ui, sans-serif;
+
+  --radius-card: 20px;
+  --radius-input: 14px;
+}
+
+html {
+  background: var(--color-ground);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-text-size-adjust: 100%;
+}
+body {
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-heading);
+  letter-spacing: -0.01em;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-ink);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--color-line) 25%, #eef1e9 50%, var(--color-line) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+  * {
+    scroll-behavior: auto !important;
+  }
+}
+
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}

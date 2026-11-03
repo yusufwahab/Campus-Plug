@@ -17,3 +17,4 @@ Each entry: decision, reason, how to change it later.
 | 11 | Non-student vendors disabled by default (`allow_vendors=false`). | Prompt requirement. | Admin settings. |
 | 12 | Roles: `buyer`, `seller`, `admin` plus reserved `super_admin` (treated as admin superset). Add-ons `verifier` and `hall_rep` live in `user_permissions`. | Prompt: model for future Super Admin. | n/a |
 | 13 | Frontend API client is typed from FastAPI's OpenAPI schema via `openapi-typescript` and a thin fetch wrapper. | Prompt requirement. | n/a |
+| 14 | TypeScript pinned to 5.x in `web/`. | openapi-typescript peer range excludes TS 7. | Bump when supported. |
