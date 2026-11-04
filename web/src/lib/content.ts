@@ -52,6 +52,6 @@ export const faqs = [
   { q: "What if my order never arrives?", a: "Open the order and tap Report a problem. Payout pauses and an Admin reviews it." },
   { q: "What does Verified mean?", a: "The seller's student ID was checked by our team. Verified sellers can receive in-app payments." },
   { q: "Can I pay in cash?", a: "Yes, but cash and direct transfers are marked Not protected and cannot be refunded by Campus Plug." },
-  { q: "How do I become a seller?", a: "Create an account, confirm your phone, then open a shop from the Sell button. You can list in under a minute." },
+  { q: "How do I become a seller?", a: "Create an account, confirm your email, then open a shop from the Sell button. You can list in under a minute." },
   { q: "I can't find what I need.", a: "Post a Plug Me request. Matching sellers are notified and reply in chat." },
 ];

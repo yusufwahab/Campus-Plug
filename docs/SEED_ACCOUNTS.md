@@ -9,7 +9,7 @@ All fake accounts use `@example.com` addresses and the shared password `Passw0rd
 | admin2@example.com | admin | Same secret. A second admin so two-person checks can be tried. |
 | verifier@example.com | buyer + verifier permission | Can review identity submissions, cannot verify themself. |
 | rep@example.com | buyer + hall rep permission | Can onboard sellers and vouch for them. |
-| buyer1@example.com | buyer ("Tolu Buyer") | Phone confirmed. |
+| buyer1@example.com | buyer ("Tolu Buyer") | Email confirmed. |
 | buyer2@example.com | buyer ("Chidi Buyer") | |
 | seller.verified@example.com | seller ("Kemi's Corner") | Verified, payout details present, has listings including "Meat pie box (6)". |
 | seller.new@example.com | seller ("Femi Fresh Finds") | Not verified: in-app payment is off for this shop. |

@@ -85,7 +85,7 @@ def test_nobody_can_verify_themselves(client, h, db, storage):
     grant(h, "ver@example.com", "verifier")
     from app.models.identity import User
 
-    db.query(User).filter_by(email="ver@example.com").one().phone_verified = True
+    db.query(User).filter_by(email="ver@example.com").one().email_verified = True
     db.commit()
     headers = h.login("ver@example.com")
     assert client.post(f"{API}/seller/start", json={"name": "Ver Shop", "accept_rules": True}, headers=headers).status_code == 201
@@ -97,7 +97,7 @@ def test_nobody_can_verify_themselves(client, h, db, storage):
 
 
 def test_an_admin_cannot_verify_their_own_shop_or_be_assigned_it(client, h, db, storage):
-    h.make_user("boss@example.com", role="admin", phone_verified=True)
+    h.make_user("boss@example.com", role="admin", email_verified=True)
     admin = h.login("boss@example.com")
     assert client.post(f"{API}/seller/start", json={"name": "Boss Shop", "accept_rules": True}, headers=admin).status_code == 201
     sub_id = submit(client, admin).json()["id"]
@@ -139,7 +139,7 @@ def test_trust_levels_are_earned_with_admin_thresholds(db):
         rating_sum=0,
         rating_count=0,
     )
-    assert recompute_trust(db, shop) == "phone_confirmed"
+    assert recompute_trust(db, shop) == "email_confirmed"
     shop.verification_status = "verified"
     assert recompute_trust(db, shop) == "verified_student"
     shop.confirmed_deals, shop.rating_sum, shop.rating_count = 10, 46, 10
@@ -177,7 +177,7 @@ def test_hall_rep_can_onboard_and_vouch_but_nothing_else(client, h, db, storage)
 
     mth = db.scalar(select(Location.id).where(Location.name.like("Madam%")))
     grant(h, "rep@example.com", "hall_rep", mth)
-    h.make_user("student@example.com", phone_verified=True)
+    h.make_user("student@example.com", email_verified=True)
     rep = h.login("rep@example.com")
     res = client.post(f"{API}/rep/sellers", json={"email": "student@example.com", "shop_name": "Hall Snacks"}, headers=rep)
     assert res.status_code == 201 and res.json()["location_name"].startswith("Madam")
@@ -201,7 +201,7 @@ def test_hall_rep_can_onboard_and_vouch_but_nothing_else(client, h, db, storage)
 
 def test_onboarded_seller_must_accept_rules_before_publishing(client, h, db):
     grant(h, "rep@example.com", "hall_rep")
-    h.make_user("student@example.com", phone_verified=True)
+    h.make_user("student@example.com", email_verified=True)
     client.post(f"{API}/rep/sellers", json={"email": "student@example.com", "shop_name": "Rep Made"}, headers=h.login("rep@example.com"))
     seller = h.login("student@example.com")
     blocked = client.post(f"{API}/listings", json=listing_body(db), headers=seller)
@@ -330,7 +330,7 @@ def test_badge_removal_and_seller_commission_are_logged(client, h, db):
     db.commit()
     admin = admin_headers(client, h)
     res = client.post(f"{API}/admin/sellers/{shop.public_id}/remove-badge", json={"reason": "ID found to be fake"}, headers=admin).json()
-    assert res["verification_status"] == "unverified" and res["trust_level"] == "phone_confirmed"
+    assert res["verification_status"] == "unverified" and res["trust_level"] == "email_confirmed"
     c = client.post(
         f"{API}/admin/sellers/{shop.public_id}/commission",
         json={"commission_override_bps": 1000, "reason": "Partner seller"},

@@ -49,11 +49,6 @@ def decode_local_token(token: str) -> dict[str, Any]:
     return jwt.decode(token, get_settings().jwt_secret, algorithms=[ALGORITHM])
 
 
-def decode_supabase_token(token: str) -> dict[str, Any]:
-    settings = get_settings()
-    return jwt.decode(token, settings.supabase_jwt_secret, algorithms=[ALGORITHM], audience="authenticated")
-
-
 def new_totp_secret() -> str:
     return pyotp.random_base32()
 

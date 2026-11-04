@@ -158,6 +158,18 @@ Money columns end in `_kobo` (integer). Rates end in `_bps` (basis points). Time
 | created_at | DATETIME | required |
 | resolved_at | DATETIME |  |
 
+## email_codes
+
+| Column | Type | Notes |
+|---|---|---|
+| id | INTEGER | primary key |
+| user_id | INTEGER | -> users.id, required |
+| email | VARCHAR(255) | required |
+| code_hash | VARCHAR(100) | required |
+| expires_at | DATETIME | required |
+| attempts | INTEGER | required |
+| used | BOOLEAN | required |
+
 ## jobs
 
 | Column | Type | Notes |
@@ -356,18 +368,6 @@ Money columns end in `_kobo` (integer). Rates end in `_bps` (basis points). Time
 | provider_ref | VARCHAR(80) | required |
 | created_at | DATETIME | required |
 | paid_at | DATETIME |  |
-
-## phone_codes
-
-| Column | Type | Notes |
-|---|---|---|
-| id | INTEGER | primary key |
-| user_id | INTEGER | -> users.id, required |
-| phone | VARCHAR(20) | required |
-| code_hash | VARCHAR(100) | required |
-| expires_at | DATETIME | required |
-| attempts | INTEGER | required |
-| used | BOOLEAN | required |
 
 ## plans
 
@@ -619,11 +619,11 @@ Money columns end in `_kobo` (integer). Rates end in `_bps` (basis points). Time
 | Column | Type | Notes |
 |---|---|---|
 | id | INTEGER | primary key |
-| auth_id | VARCHAR(64) | unique |
 | email | VARCHAR(255) | unique, required |
 | password_hash | VARCHAR(100) |  |
 | phone | VARCHAR(20) |  |
 | phone_verified | BOOLEAN | required |
+| email_verified | BOOLEAN | required |
 | full_name | VARCHAR(120) | required |
 | role | VARCHAR(12) | required |
 | status | VARCHAR(12) | required |

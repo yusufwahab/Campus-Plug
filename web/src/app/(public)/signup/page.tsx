@@ -30,7 +30,7 @@ function SignupForm() {
       const res = await api<TokenOut>("/auth/signup", { method: "POST", body: values, token: null });
       if (res.token) tokenStore.set(res.token);
       await client.invalidateQueries({ queryKey: ["me"] });
-      router.push(`/verify-phone?next=${encodeURIComponent(next)}`);
+      router.push(`/verify-email?next=${encodeURIComponent(next)}`);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Could not create your account.");
     }
@@ -41,7 +41,7 @@ function SignupForm() {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" noValidate>
         <Input label="Full name" autoComplete="name" error={errors.full_name?.message} {...form.register("full_name")} />
         <Input label="Email" type="email" autoComplete="email" error={errors.email?.message} {...form.register("email")} />
-        <Input label="Phone number" type="tel" autoComplete="tel" hint="We send a code to confirm it. Your number stays hidden from other users." error={errors.phone?.message} {...form.register("phone")} />
+        <Input label="Phone number" type="tel" autoComplete="tel" hint="Your number stays hidden from other users until you both agree to share it." error={errors.phone?.message} {...form.register("phone")} />
         <Input label="Password" type="password" autoComplete="new-password" hint="At least 8 characters." error={errors.password?.message} {...form.register("password")} />
         <FormError message={error} />
         <Button type="submit" className="w-full" loading={form.formState.isSubmitting}>

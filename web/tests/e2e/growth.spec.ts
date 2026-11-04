@@ -25,7 +25,7 @@ test("admin campaign code: buyer sees the discount and the order total drops", a
   await admin.page.getByLabel("Code", { exact: true }).fill(code);
   await admin.page.getByLabel("Percent off").fill("10");
   await adminModalSubmit(admin.page, "Create code");
-  await expect(admin.page.getByText(code).first()).toBeVisible();
+  await expect(admin.page.getByText(code).filter({ visible: true }).first()).toBeVisible();
   await admin.ctx.close();
 
   await login(page, "buyer1@example.com");
@@ -36,7 +36,7 @@ test("admin campaign code: buyer sees the discount and the order total drops", a
   await modal.getByLabel(/Seller delivers/).check();
   await expect(modal.getByText("₦3,200")).toBeVisible(); // 3,000 + 500 delivery - 300
   await modal.getByRole("button", { name: "Continue to checkout" }).click();
-  await expect(page).toHaveURL(/\/checkout\/CP-O-\d+$/);
+  await expect(page).toHaveURL(/\/checkout\/CP-O-\d+$/, { timeout: 20_000 });
   await expect(page.locator("dd", { hasText: "₦3,200" })).toBeVisible();
 });
 
@@ -72,7 +72,7 @@ test("plan: admin publishes it, verified seller buys it in test mode", async ({ 
   await admin.page.getByLabel("Commission (%)").fill("10");
   await admin.page.getByLabel(/Benefits/).fill("Lower commission");
   await adminModalSubmit(admin.page, "Create plan");
-  await expect(admin.page.getByText(name).first()).toBeVisible();
+  await expect(admin.page.getByText(name).filter({ visible: true }).first()).toBeVisible();
   await admin.ctx.close();
 
   await login(page, "seller.verified@example.com");
@@ -113,7 +113,7 @@ test("review: buyer rates a completed order, seller replies, the shop page shows
   await login(page, "buyer1@example.com");
   const modal = await openMeatPieBuy(page);
   await modal.getByRole("button", { name: "Continue to checkout" }).click();
-  await expect(page).toHaveURL(/\/checkout\/CP-O-\d+$/);
+  await expect(page).toHaveURL(/\/checkout\/CP-O-\d+$/, { timeout: 20_000 });
   const orderId = page.url().split("/").pop()!;
   await page.getByRole("button", { name: /^Pay ₦/ }).click();
   await page.getByRole("dialog").getByRole("button", { name: /^Pay ₦/ }).click();
@@ -143,7 +143,8 @@ test("review: buyer rates a completed order, seller replies, the shop page shows
   const item = seller.page.getByRole("listitem").filter({ hasText: "Warm and tasty" });
   await item.getByLabel("Reply publicly").fill("Thank you, see you again!");
   await item.getByRole("button", { name: "Send reply" }).click();
-  await expect(item.getByText("Thank you, see you again!")).toBeVisible();
+  // "Your reply:" only appears once the reply is saved (the typed text alone also sits in the textarea).
+  await expect(item.getByText("Your reply:")).toBeVisible();
   await seller.ctx.close();
 
   await page.goto("/shop/kemis-corner");

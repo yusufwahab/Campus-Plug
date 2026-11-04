@@ -42,10 +42,10 @@ function StartShop() {
       </AuthCard>
     );
   }
-  if (me.data && !me.data.phone_verified) {
+  if (me.data && !me.data.email_verified) {
     return (
-      <AuthCard title="Confirm your phone first" subtitle="Sellers must confirm a phone number before opening a shop.">
-        <Button href="/verify-phone?next=%2Fseller%2Fstart">Confirm phone number</Button>
+      <AuthCard title="Confirm your email first" subtitle="Sellers must confirm their email address before opening a shop.">
+        <Button href="/verify-email?next=%2Fseller%2Fstart">Confirm email address</Button>
       </AuthCard>
     );
   }

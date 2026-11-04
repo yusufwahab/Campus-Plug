@@ -1,4 +1,4 @@
-"""row level security (PostgreSQL / Supabase only; a no-op elsewhere)
+"""row level security (PostgreSQL only; a no-op elsewhere)
 
 Revision ID: 0008
 Revises: 0007
@@ -21,15 +21,9 @@ def _tables() -> list[str]:
 def upgrade() -> None:
     if op.get_bind().dialect.name != "postgresql":
         return
-    # Local Postgres without Supabase has no anon/authenticated roles; create them so the statements still apply.
+    # Plain Postgres has no Supabase roles; create them (no login) so the REVOKE statements apply everywhere.
     for role in ("anon", "authenticated"):
         op.execute(f"DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = '{role}') THEN CREATE ROLE {role} NOLOGIN; END IF; END $$")
-    op.execute("CREATE SCHEMA IF NOT EXISTS auth")
-    op.execute(
-        "DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace "
-        "WHERE n.nspname = 'auth' AND p.proname = 'uid') THEN "
-        "CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $f$ SELECT NULL::uuid $f$; END IF; END $$"
-    )
     for statement in enable_statements(_tables()):
         op.execute(statement)
 

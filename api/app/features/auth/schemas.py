@@ -40,17 +40,8 @@ class MfaEnrollIn(BaseModel):
     mfa_token: str
 
 
-class PhoneSendIn(BaseModel):
-    phone: str
-
-    @field_validator("phone")
-    @classmethod
-    def _phone(cls, v: str) -> str:
-        return normalise_phone(v)
-
-
-class PhoneVerifyIn(BaseModel):
-    code: str = Field(min_length=6, max_length=6)
+class EmailCodeIn(BaseModel):
+    code: str = Field(min_length=6, max_length=6, pattern=r"^\d{6}$")
 
 
 class TokenOut(BaseModel):
@@ -66,7 +57,7 @@ class UserOut(BaseModel):
     email: str
     full_name: str
     phone: str | None
-    phone_verified: bool
+    email_verified: bool
     role: str
     status: str
     campus_id: int | None

@@ -1,9 +1,29 @@
 import os
 
-os.environ["APP_ENV"] = "test"
-os.environ["DATABASE_URL"] = "sqlite://"
-os.environ["AUTH_PROVIDER"] = "local"
-os.environ["EXPOSE_DEV_CODES"] = "true"
+# Settings also read api/.env. Set every value here so a developer's real .env can never change what tests do,
+# and so tests can never reach a real database, payment account or mailbox.
+TEST_ENV = {
+    "APP_ENV": "test",
+    "DATABASE_URL": "sqlite://",
+    "JWT_SECRET": "test-only-secret-not-used-anywhere-else-0123456789",
+    "EXPOSE_DEV_CODES": "true",
+    "PAYMENT_PROVIDER": "local",
+    "PAYSTACK_SECRET_KEY": "",
+    "EMAIL_PROVIDER": "local",
+    "BREVO_API_KEY": "",
+    "EMAIL_FROM": "",
+    "STORAGE_PROVIDER": "local",
+    "CLOUDINARY_CLOUD_NAME": "",
+    "CLOUDINARY_API_KEY": "",
+    "CLOUDINARY_API_SECRET": "",
+    "CORS_ORIGINS": "http://localhost:3000",
+    "WEB_URL": "http://localhost:3000",
+    "FEATURE_SMS": "false",
+    "VAPID_PRIVATE_KEY": "",
+    "VAPID_PUBLIC_KEY": "",
+    "RATE_LIMIT_MULTIPLIER": "1",
+}
+os.environ.update(TEST_ENV)
 
 import pyotp  # noqa: E402
 import pytest  # noqa: E402

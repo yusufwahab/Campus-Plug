@@ -50,5 +50,9 @@
   },
   "overrides": {
     "zod": "^4.6.7"
+  },
+  "optionalDependencies": {
+    "@rolldown/binding-linux-x64-gnu": "^1.2.16",
+    "@rolldown/binding-win32-x64-msvc": "^1.2.16"
   }
 }

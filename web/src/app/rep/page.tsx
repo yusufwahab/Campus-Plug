@@ -74,7 +74,7 @@ function Rep() {
       )}
       <Modal open={open} title="Onboard a seller" onClose={() => setOpen(false)} dirty={!!form.email}>
         <form onSubmit={onboard} className="space-y-3" noValidate>
-          <p className="text-sm text-muted">They must already have an account with a confirmed phone number. They accept the seller rules the first time they sign in.</p>
+          <p className="text-sm text-muted">They must already have an account with a confirmed email address. They accept the seller rules the first time they sign in.</p>
           <Input label="Their account email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
           <Input label="Shop name" value={form.shop_name} onChange={(e) => setForm({ ...form, shop_name: e.target.value })} />
           <FormError message={error} />

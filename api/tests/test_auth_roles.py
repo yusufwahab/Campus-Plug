@@ -18,7 +18,7 @@ def test_signup_login_me(client):
     assert me["email"] == "ada@example.com"
     assert me["role"] == "buyer"
     assert me["phone"] == "+2348031234567"
-    assert me["phone_verified"] is False
+    assert me["email_verified"] is False
     assert client.post(f"{API}/auth/login", json={"email": "ada@example.com", "password": "password123"}).status_code == 200
     assert client.post(f"{API}/auth/login", json={"email": "ada@example.com", "password": "wrong-pass"}).status_code == 401
 
@@ -35,26 +35,59 @@ def test_login_is_rate_limited(client):
     assert client.post(f"{API}/auth/login", json={"email": "nobody@example.com", "password": "password123"}).status_code == 429
 
 
-def test_phone_verification_flow(client):
-    headers = {"Authorization": f"Bearer {signup(client).json()['token']}"}
-    sent = client.post(f"{API}/auth/phone/send", json={"phone": "08031234567"}, headers=headers).json()
-    assert (
-        client.post(
-            f"{API}/auth/phone/verify", json={"code": "000000" if sent["dev_code"] != "000000" else "111111"}, headers=headers
-        ).status_code
-        == 400
-    )
-    assert client.post(f"{API}/auth/phone/verify", json={"code": sent["dev_code"]}, headers=headers).status_code == 200
-    assert client.get(f"{API}/me", headers=headers).json()["phone_verified"] is True
+def emailed_code(to: str) -> str:
+    """The 6-digit code in the latest message the local (test) email sender kept for this address."""
+    import re
+
+    from app.adapters.email import LocalEmail
+
+    body = [b for t, _, b in LocalEmail.outbox if t == to][-1]
+    return re.search(r"(\d{6})", body).group(1)  # type: ignore[union-attr]
 
 
-def test_phone_code_is_single_use_and_locks_after_attempts(client):
+def test_signup_emails_a_code_and_it_confirms_the_address(client):
     headers = {"Authorization": f"Bearer {signup(client).json()['token']}"}
-    sent = client.post(f"{API}/auth/phone/send", json={"phone": "08031234567"}, headers=headers).json()
-    wrong = "111111" if sent["dev_code"] != "111111" else "222222"
+    code = emailed_code("ada@example.com")
+    wrong = "000000" if code != "000000" else "111111"
+    assert client.post(f"{API}/auth/email/verify", json={"code": wrong}, headers=headers).status_code == 400
+    assert client.get(f"{API}/me", headers=headers).json()["email_verified"] is False
+    assert client.post(f"{API}/auth/email/verify", json={"code": code}, headers=headers).status_code == 200
+    assert client.get(f"{API}/me", headers=headers).json()["email_verified"] is True
+    assert client.post(f"{API}/auth/email/send", headers=headers).status_code == 409  # already confirmed
+
+
+def test_resending_replaces_the_old_code(client):
+    headers = {"Authorization": f"Bearer {signup(client).json()['token']}"}
+    first = emailed_code("ada@example.com")
+    sent = client.post(f"{API}/auth/email/send", headers=headers).json()
+    second = sent["dev_code"]
+    assert second == emailed_code("ada@example.com")
+    if first != second:
+        assert client.post(f"{API}/auth/email/verify", json={"code": first}, headers=headers).status_code == 400
+    assert client.post(f"{API}/auth/email/verify", json={"code": second}, headers=headers).status_code == 200
+
+
+def test_email_code_locks_after_five_wrong_attempts(client):
+    headers = {"Authorization": f"Bearer {signup(client).json()['token']}"}
+    code = emailed_code("ada@example.com")
+    wrong = "111111" if code != "111111" else "222222"
     for _ in range(5):
-        client.post(f"{API}/auth/phone/verify", json={"code": wrong}, headers=headers)
-    assert client.post(f"{API}/auth/phone/verify", json={"code": sent["dev_code"]}, headers=headers).status_code == 400
+        client.post(f"{API}/auth/email/verify", json={"code": wrong}, headers=headers)
+    assert client.post(f"{API}/auth/email/verify", json={"code": code}, headers=headers).status_code == 400
+
+
+def test_email_code_must_be_six_digits(client):
+    headers = {"Authorization": f"Bearer {signup(client).json()['token']}"}
+    assert client.post(f"{API}/auth/email/verify", json={"code": "12ab56"}, headers=headers).status_code == 422
+
+
+def test_reset_email_carries_an_absolute_link_to_the_site(client):
+    signup(client)
+    from app.adapters.email import LocalEmail
+
+    client.post(f"{API}/auth/forgot", json={"email": "ada@example.com"})
+    body = [b for t, s, b in LocalEmail.outbox if t == "ada@example.com" and "Reset" in s][-1]
+    assert "http://localhost:3000/reset-password?token=" in body
 
 
 def test_onboarding_validates_campus_and_location(client, db):

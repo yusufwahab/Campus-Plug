@@ -1,6 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
-import { PNG, apiAs, confirmPhone, login, loginAdmin, newSeller, otherRole, signup } from "./helpers";
+import { PNG, apiAs, confirmEmail, login, loginAdmin, newSeller, otherRole, signup } from "./helpers";
 
 test("verification journey: seller, admin and verifier", async ({ page, browser }, info) => {
   const shopName = `Verify Me ${info.project.name}${Date.now()}`;
@@ -70,7 +70,7 @@ test("verifier cannot verify themselves or see admin; hall rep is limited", asyn
 
 test("hall rep onboards a seller and vouches for them", async ({ page, browser }, info) => {
   const email = await signup(page, "student");
-  await confirmPhone(page);
+  await confirmEmail(page);
   const shopName = `Rep Shop ${info.project.name}${Date.now()}`;
   const rep = await otherRole(browser, page, "rep@example.com");
   await rep.page.goto("/rep");
@@ -247,7 +247,7 @@ test("admin users table: cards on mobile, sticky-header table otherwise, with se
 
 test("admin suspension asks for a reason and signs the user out", async ({ page, browser }) => {
   const email = await signup(page, "tobesuspended");
-  await confirmPhone(page);
+  await confirmEmail(page);
   const admin = await otherRole(browser, page, "admin");
   await admin.page.goto("/admin/users");
   await admin.page.getByLabel("Search name, email or phone").fill(email);

@@ -5,12 +5,12 @@ from app.settings_store import get_setting
 
 
 def recompute_trust(db: Session, shop: Shop) -> str:
-    """Phone Confirmed -> Verified Student -> Trusted Seller.
+    """Email Confirmed -> Verified Student -> Trusted Seller.
 
     Trusted Seller is earned automatically from confirmed deals and good ratings, using Admin-set thresholds.
     """
     if shop.verification_status != "verified":
-        shop.trust_level = "phone_confirmed"
+        shop.trust_level = "email_confirmed"
         return shop.trust_level
     shop.trust_level = "verified_student"
     average_x10 = shop.rating_sum * 10 // shop.rating_count if shop.rating_count else 0

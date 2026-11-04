@@ -44,8 +44,8 @@ def onboard(body: OnboardIn, rep: Rep, db: DB) -> SellerOut:
     user = db.scalar(select(User).where(User.email == body.email.lower(), User.deleted_at.is_(None)))
     if user is None:
         raise HTTPException(404, "No account with that email. Ask them to sign up first.")
-    if not user.phone_verified:
-        raise HTTPException(422, "They need to confirm their phone number first.")
+    if not user.email_verified:
+        raise HTTPException(422, "They need to confirm their email address first.")
     if db.scalar(select(Shop.id).where(Shop.user_id == user.id)):
         raise HTTPException(409, "They already have a shop.")
     campus_id = user.campus_id or db.scalar(select(Campus.id).where(Campus.enabled.is_(True)).order_by(Campus.id))

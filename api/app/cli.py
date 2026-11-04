@@ -24,7 +24,7 @@ def create_admin(email: str, name: str) -> None:
                 full_name=name,
                 role="admin",
                 password_hash=hash_password(password),
-                phone_verified=True,
+                email_verified=True,
                 onboarded=True,
             )
         )
@@ -39,7 +39,13 @@ def main() -> None:
     admin.add_argument("--email", required=True)
     admin.add_argument("--name", required=True)
     sub.add_parser("seed-reference")
+    pre = sub.add_parser("preflight", help="Check the configuration without printing any secret")
+    pre.add_argument("--online", action="store_true", help="Also make one harmless read-only call to each service")
     args = parser.parse_args()
+    if args.cmd == "preflight":
+        from app.preflight import run
+
+        raise SystemExit(run(args.online))
     if args.cmd == "create-admin":
         create_admin(args.email, args.name)
     elif args.cmd == "seed-reference":

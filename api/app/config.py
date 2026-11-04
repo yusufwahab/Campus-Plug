@@ -8,15 +8,21 @@ class Settings(BaseSettings):
 
     app_env: str = "local"
     database_url: str = "sqlite:///./campusplug.db"
-    auth_provider: str = "local"
     jwt_secret: str = "change-me-local-only-use-a-long-random-string"
-    supabase_url: str = ""
-    supabase_jwt_secret: str = ""
-    supabase_service_key: str = ""
     cors_origins: str = "http://localhost:3000"
     payment_provider: str = "local"
     web_url: str = "http://localhost:3000"
     paystack_secret_key: str = ""
+    # local = files on this server's disk (test only: Render wipes it on every deploy). cloudinary = real storage.
+    storage_provider: str = "local"
+    cloudinary_cloud_name: str = ""
+    cloudinary_api_key: str = ""
+    cloudinary_api_secret: str = ""
+    # local = writes to a log only (test). brevo = real email through Brevo's API.
+    email_provider: str = "local"
+    brevo_api_key: str = ""
+    email_from: str = ""
+    email_from_name: str = "Campus Plug"
     feature_sms: bool = False
     expose_dev_codes: bool = False
     access_token_minutes: int = 60 * 12
@@ -34,16 +40,18 @@ class Settings(BaseSettings):
 def production_problems(settings: Settings) -> list[str]:
     """Everything that must be true before the API will start in production."""
     problems = []
-    if settings.auth_provider != "supabase":
-        problems.append("AUTH_PROVIDER must be supabase")
-    if settings.jwt_secret.startswith("change-me"):
-        problems.append("JWT_SECRET must be a real secret")
-    if not (settings.supabase_url and settings.supabase_jwt_secret):
-        problems.append("SUPABASE_URL and SUPABASE_JWT_SECRET are required")
+    if settings.jwt_secret.startswith("change-me") or len(settings.jwt_secret) < 32:
+        problems.append("JWT_SECRET must be a random secret of at least 32 characters")
     if settings.database_url.startswith("sqlite"):
         problems.append("DATABASE_URL must be PostgreSQL, not SQLite")
     if settings.payment_provider != "paystack" or not settings.paystack_secret_key:
         problems.append("PAYMENT_PROVIDER must be paystack with PAYSTACK_SECRET_KEY set")
+    if settings.email_provider != "brevo" or not (settings.brevo_api_key and settings.email_from):
+        problems.append("EMAIL_PROVIDER must be brevo with BREVO_API_KEY and EMAIL_FROM set (sign-up codes are sent by email)")
+    if settings.storage_provider != "cloudinary" or not (
+        settings.cloudinary_cloud_name and settings.cloudinary_api_key and settings.cloudinary_api_secret
+    ):
+        problems.append("STORAGE_PROVIDER must be cloudinary with CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET set")
     if settings.expose_dev_codes:
         problems.append("EXPOSE_DEV_CODES must be false")
     if settings.rate_limit_multiplier != 1:

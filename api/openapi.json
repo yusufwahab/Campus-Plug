@@ -173,13 +173,13 @@
         }
       }
     },
-    "/api/v1/auth/phone/send": {
+    "/api/v1/auth/email/send": {
       "post": {
         "tags": [
           "auth"
         ],
-        "summary": "Phone Send",
-        "operationId": "phone_send_api_v1_auth_phone_send_post",
+        "summary": "Email Send",
+        "operationId": "email_send_api_v1_auth_email_send_post",
         "parameters": [
           {
             "name": "authorization",
@@ -198,16 +198,6 @@
             }
           }
         ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PhoneSendIn"
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -225,7 +215,7 @@
                       }
                     ]
                   },
-                  "title": "Response Phone Send Api V1 Auth Phone Send Post"
+                  "title": "Response Email Send Api V1 Auth Email Send Post"
                 }
               }
             }
@@ -243,13 +233,13 @@
         }
       }
     },
-    "/api/v1/auth/phone/verify": {
+    "/api/v1/auth/email/verify": {
       "post": {
         "tags": [
           "auth"
         ],
-        "summary": "Phone Verify",
-        "operationId": "phone_verify_api_v1_auth_phone_verify_post",
+        "summary": "Email Verify",
+        "operationId": "email_verify_api_v1_auth_email_verify_post",
         "parameters": [
           {
             "name": "authorization",
@@ -273,7 +263,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PhoneVerifyIn"
+                "$ref": "#/components/schemas/EmailCodeIn"
               }
             }
           }
@@ -288,7 +278,7 @@
                   "additionalProperties": {
                     "type": "boolean"
                   },
-                  "title": "Response Phone Verify Api V1 Auth Phone Verify Post"
+                  "title": "Response Email Verify Api V1 Auth Email Verify Post"
                 }
               }
             }
@@ -11678,6 +11668,22 @@
         ],
         "title": "EarningsOut"
       },
+      "EmailCodeIn": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "maxLength": 6,
+            "minLength": 6,
+            "pattern": "^\\d{6}$",
+            "title": "Code"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code"
+        ],
+        "title": "EmailCodeIn"
+      },
       "EventOut": {
         "properties": {
           "status": {
@@ -13817,34 +13823,6 @@
         ],
         "title": "PermissionIn"
       },
-      "PhoneSendIn": {
-        "properties": {
-          "phone": {
-            "type": "string",
-            "title": "Phone"
-          }
-        },
-        "type": "object",
-        "required": [
-          "phone"
-        ],
-        "title": "PhoneSendIn"
-      },
-      "PhoneVerifyIn": {
-        "properties": {
-          "code": {
-            "type": "string",
-            "maxLength": 6,
-            "minLength": 6,
-            "title": "Code"
-          }
-        },
-        "type": "object",
-        "required": [
-          "code"
-        ],
-        "title": "PhoneVerifyIn"
-      },
       "PlanAdmin": {
         "properties": {
           "id": {
@@ -15936,9 +15914,9 @@
             ],
             "title": "Phone"
           },
-          "phone_verified": {
+          "email_verified": {
             "type": "boolean",
-            "title": "Phone Verified"
+            "title": "Email Verified"
           },
           "role": {
             "type": "string",
@@ -16004,7 +15982,7 @@
           "email",
           "full_name",
           "phone",
-          "phone_verified",
+          "email_verified",
           "role",
           "status",
           "campus_id",

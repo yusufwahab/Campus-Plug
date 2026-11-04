@@ -24,7 +24,7 @@ import { PaymentRequestCard } from "./PaymentRequestCard";
 
 export type Message = components["schemas"]["MessageOut"];
 
-/** Chat thread. Live updates come from polling every few seconds while the tab is visible (Supabase Realtime replaces this once configured). */
+/** Chat thread. Live updates come from polling every few seconds while the tab is visible */
 export function Thread({ id }: { id: number }) {
   const client = useQueryClient();
   const toast = useToast();

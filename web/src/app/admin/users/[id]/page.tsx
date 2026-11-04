@@ -36,7 +36,7 @@ export default function AdminUserDetail() {
     <>
       <PageHeader title={u.full_name}>
         <Badge tone={u.status === "active" ? "verified" : "danger"}>{u.status}</Badge>
-        <Badge tone={u.phone_verified ? "verified" : "pending"}>{u.phone_verified ? "Phone confirmed" : "Phone not confirmed"}</Badge>
+        <Badge tone={u.email_verified ? "verified" : "pending"}>{u.email_verified ? "Email confirmed" : "Email not confirmed"}</Badge>
       </PageHeader>
       <Card>
         <dl className="grid gap-3 md:grid-cols-2">

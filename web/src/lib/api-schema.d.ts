@@ -72,7 +72,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/auth/phone/send": {
+    "/api/v1/auth/email/send": {
         parameters: {
             query?: never;
             header?: never;
@@ -81,15 +81,15 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Phone Send */
-        post: operations["phone_send_api_v1_auth_phone_send_post"];
+        /** Email Send */
+        post: operations["email_send_api_v1_auth_email_send_post"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/auth/phone/verify": {
+    "/api/v1/auth/email/verify": {
         parameters: {
             query?: never;
             header?: never;
@@ -98,8 +98,8 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Phone Verify */
-        post: operations["phone_verify_api_v1_auth_phone_verify_post"];
+        /** Email Verify */
+        post: operations["email_verify_api_v1_auth_email_verify_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3114,6 +3114,11 @@ export interface components {
                 [key: string]: unknown;
             }[];
         };
+        /** EmailCodeIn */
+        EmailCodeIn: {
+            /** Code */
+            code: string;
+        };
         /** EventOut */
         EventOut: {
             /** Status */
@@ -3849,16 +3854,6 @@ export interface components {
             /** Reason */
             reason: string;
         };
-        /** PhoneSendIn */
-        PhoneSendIn: {
-            /** Phone */
-            phone: string;
-        };
-        /** PhoneVerifyIn */
-        PhoneVerifyIn: {
-            /** Code */
-            code: string;
-        };
         /** PlanAdmin */
         PlanAdmin: {
             /** Id */
@@ -4549,8 +4544,8 @@ export interface components {
             full_name: string;
             /** Phone */
             phone: string | null;
-            /** Phone Verified */
-            phone_verified: boolean;
+            /** Email Verified */
+            email_verified: boolean;
             /** Role */
             role: string;
             /** Status */
@@ -4835,7 +4830,7 @@ export interface operations {
             };
         };
     };
-    phone_send_api_v1_auth_phone_send_post: {
+    email_send_api_v1_auth_email_send_post: {
         parameters: {
             query?: never;
             header?: {
@@ -4844,11 +4839,7 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["PhoneSendIn"];
-            };
-        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             200: {
@@ -4872,7 +4863,7 @@ export interface operations {
             };
         };
     };
-    phone_verify_api_v1_auth_phone_verify_post: {
+    email_verify_api_v1_auth_email_verify_post: {
         parameters: {
             query?: never;
             header?: {
@@ -4883,7 +4874,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["PhoneVerifyIn"];
+                "application/json": components["schemas"]["EmailCodeIn"];
             };
         };
         responses: {

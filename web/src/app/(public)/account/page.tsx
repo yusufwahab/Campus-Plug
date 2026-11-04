@@ -85,10 +85,10 @@ function Account() {
       <h1 className="text-3xl font-extrabold">Account</h1>
       <Card className="flex flex-wrap items-center gap-2">
         <span className="font-semibold">{user.email}</span>
-        <Badge tone={user.phone_verified ? "verified" : "pending"}>{user.phone_verified ? "Phone confirmed" : "Phone not confirmed"}</Badge>
-        {!user.phone_verified && (
-          <Button href="/verify-phone" variant="tertiary">
-            Confirm phone
+        <Badge tone={user.email_verified ? "verified" : "pending"}>{user.email_verified ? "Email confirmed" : "Email not confirmed"}</Badge>
+        {!user.email_verified && (
+          <Button href="/verify-email" variant="tertiary">
+            Confirm email
           </Button>
         )}
       </Card>

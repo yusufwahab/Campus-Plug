@@ -14,14 +14,18 @@ services:
     envVars: &env
       - { key: PYTHON_VERSION, value: 3.12.7 }
       - { key: APP_ENV, value: production }
-      - { key: AUTH_PROVIDER, value: supabase }
       - { key: PAYMENT_PROVIDER, value: paystack }
+      - { key: EMAIL_PROVIDER, value: brevo }
       - { key: EXPOSE_DEV_CODES, value: "false" }
       - { key: DATABASE_URL, sync: false }
       - { key: JWT_SECRET, generateValue: true }
-      - { key: SUPABASE_URL, sync: false }
-      - { key: SUPABASE_JWT_SECRET, sync: false }
-      - { key: SUPABASE_SERVICE_KEY, sync: false }
+      - { key: STORAGE_PROVIDER, value: cloudinary }
+      - { key: CLOUDINARY_CLOUD_NAME, sync: false }
+      - { key: CLOUDINARY_API_KEY, sync: false }
+      - { key: CLOUDINARY_API_SECRET, sync: false }
+      - { key: BREVO_API_KEY, sync: false }
+      - { key: EMAIL_FROM, sync: false }
+      - { key: EMAIL_FROM_NAME, value: Campus Plug }
       - { key: PAYSTACK_SECRET_KEY, sync: false }
       - { key: CORS_ORIGINS, sync: false }
       - { key: WEB_URL, sync: false }

@@ -74,12 +74,12 @@ Admin routes need an admin account that signed in with its two-step code. Money 
 
 | Method | Path | Summary |
 |---|---|---|
+| POST | `/api/v1/auth/email/send` | Email Send |
+| POST | `/api/v1/auth/email/verify` | Email Verify |
 | POST | `/api/v1/auth/forgot` | Forgot Password |
 | POST | `/api/v1/auth/login` | Login |
 | POST | `/api/v1/auth/mfa/enroll` | Mfa Enroll |
 | POST | `/api/v1/auth/mfa/verify` | Mfa Verify |
-| POST | `/api/v1/auth/phone/send` | Phone Send |
-| POST | `/api/v1/auth/phone/verify` | Phone Verify |
 | POST | `/api/v1/auth/reset` | Reset Password |
 | POST | `/api/v1/auth/signup` | Signup |
 | GET | `/api/v1/me` | Me |

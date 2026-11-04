@@ -15,7 +15,7 @@ const pickedProject = rest.some((a) => a === "--project" || a.startsWith("--proj
 const projects = pickedProject ? [null] : ["mobile", "tablet", "desktop"];
 let failed = 0;
 for (const project of projects) {
-  const extra = project ? ["--project", project] : [];
+  const extra = project ? [`--project=${project}`] : []; // "=" form: --project is variadic and would swallow spec file names
   if (run("npx", ["playwright", "test", ...extra, ...rest]) !== 0) failed = 1;
 }
 process.exit(failed);

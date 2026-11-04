@@ -4,7 +4,9 @@ const widths = { mobile: 390, tablet: 768, desktop: 1440 } as const;
 
 export default defineConfig({
   testDir: "tests/e2e",
-  timeout: 45_000,
+  timeout: 60_000,
+  // Journeys wait on the API, the job runner and page transitions; 5s is too tight on a busy laptop or CI runner.
+  expect: { timeout: 15_000 },
   // Journeys share one seeded database, so run them one at a time for stable results.
   workers: 1,
   use: { baseURL: "http://localhost:3100" },

@@ -52,24 +52,24 @@ export async function signup(page: Page, label: string) {
   await page.getByLabel("Phone number").fill("08031234567");
   await page.getByLabel("Password").fill(PASSWORD);
   await page.getByRole("button", { name: "Create account" }).click();
-  await page.waitForURL(/verify-phone/);
+  await page.waitForURL(/verify-email/);
   return email;
 }
 
 export const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64");
 
-/** Confirms the phone number through the real UI after signup. */
-export async function confirmPhone(page: Page) {
-  await page.getByRole("button", { name: "Send code" }).click();
+/** Confirms the email address through the real UI after signup (the test sender shows the code on screen). */
+export async function confirmEmail(page: Page) {
+  await page.getByRole("button", { name: "Send a new code" }).click();
   await page.getByLabel("6-digit code").fill(await page.getByTestId("dev-code").innerText());
   await page.getByRole("button", { name: "Confirm" }).click();
   await page.waitForURL(/onboarding/);
 }
 
-/** A brand new seller through the real UI: signup, phone, shop. */
+/** A brand new seller through the real UI: signup, email, shop. */
 export async function newSeller(page: Page, shopName: string) {
   const email = await signup(page, "seller");
-  await confirmPhone(page);
+  await confirmEmail(page);
   await page.goto("/seller/start");
   await page.getByLabel("Shop name").fill(shopName);
   await page.getByLabel("About your shop").fill("Fresh bakes for UNILAG.");

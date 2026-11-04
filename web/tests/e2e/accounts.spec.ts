@@ -17,10 +17,10 @@ test("wrong password shows an inline error", async ({ page }) => {
   await expect(page.getByRole("alert").filter({ hasText: "incorrect" })).toBeVisible();
 });
 
-test("signup, phone confirmation, onboarding and sign out", async ({ page }) => {
+test("signup, email confirmation, onboarding and sign out", async ({ page }) => {
   await signup(page, "newbie");
-  await expect(page.getByRole("heading", { name: "Confirm your phone" })).toBeVisible();
-  await page.getByRole("button", { name: "Send code" }).click();
+  await expect(page.getByRole("heading", { name: "Confirm your email" })).toBeVisible();
+  await page.getByRole("button", { name: "Send a new code" }).click();
   const code = await page.getByTestId("dev-code").innerText();
   await page.getByLabel("6-digit code").fill(code);
   await page.getByRole("button", { name: "Confirm" }).click();
@@ -30,7 +30,7 @@ test("signup, phone confirmation, onboarding and sign out", async ({ page }) => 
   await page.getByRole("button", { name: "Finish" }).click();
   await expect(page).toHaveURL(/\/$/);
   await page.goto("/account");
-  await expect(page.getByText("Phone confirmed")).toBeVisible();
+  await expect(page.getByText("Email confirmed")).toBeVisible();
   await page.getByRole("button", { name: "Sign out" }).click();
   await page.getByRole("dialog").getByRole("button", { name: "Sign out" }).click();
   await expect(page).toHaveURL(/\/$/);

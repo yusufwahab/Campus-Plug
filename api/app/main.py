@@ -78,7 +78,7 @@ def create_app() -> FastAPI:
     app.include_router(api)
     public_dir = UPLOAD_ROOT / "public"
     public_dir.mkdir(parents=True, exist_ok=True)
-    app.mount("/uploads", StaticFiles(directory=public_dir), name="uploads")  # TEST storage; production uses Supabase Storage
+    app.mount("/uploads", StaticFiles(directory=public_dir), name="uploads")  # TEST storage; production uses Cloudinary
 
     @app.get("/healthz", include_in_schema=False)
     def healthz() -> dict[str, str]:

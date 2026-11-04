@@ -12,8 +12,8 @@ def category_id(db, slug="food"):
     return db.scalar(select(Category.id).where(Category.slug == slug))
 
 
-def start_shop(client, h, email="seller@example.com", name="Tolu Kitchen", phone_verified=True):
-    h.make_user(email, phone_verified=phone_verified)
+def start_shop(client, h, email="seller@example.com", name="Tolu Kitchen", email_verified=True):
+    h.make_user(email, email_verified=email_verified)
     headers = h.login(email)
     res = client.post(f"{API}/seller/start", json={"name": name, "accept_rules": True}, headers=headers)
     return headers, res
@@ -31,10 +31,10 @@ def listing_body(db, **over):
     return {**body, **over}
 
 
-def test_seller_start_requires_phone_and_rules(client, h):
-    _, res = start_shop(client, h, phone_verified=False)
+def test_seller_start_requires_confirmed_email_and_rules(client, h):
+    _, res = start_shop(client, h, email_verified=False)
     assert res.status_code == 403
-    h.make_user("ok@example.com", phone_verified=True)
+    h.make_user("ok@example.com", email_verified=True)
     headers = h.login("ok@example.com")
     assert client.post(f"{API}/seller/start", json={"name": "No Rules", "accept_rules": False}, headers=headers).status_code == 422
 
@@ -44,13 +44,13 @@ def test_seller_start_creates_shop_with_platform_id(client, h):
     assert res.status_code == 201
     body = res.json()
     assert body["public_id"].startswith("CP-SL-") and body["slug"] == "tolu-kitchen"
-    assert body["verification_status"] == "unverified" and body["trust_level"] == "phone_confirmed"
+    assert body["verification_status"] == "unverified" and body["trust_level"] == "email_confirmed"
     assert client.get(f"{API}/me", headers=headers).json()["role"] == "seller"
     assert client.post(f"{API}/seller/start", json={"name": "Again", "accept_rules": True}, headers=headers).status_code == 409
 
 
 def test_vendors_disabled_by_default_and_enabled_by_setting(client, h, db):
-    h.make_user("v@example.com", phone_verified=True)
+    h.make_user("v@example.com", email_verified=True)
     headers = h.login("v@example.com")
     body = {"name": "Vendor Shop", "accept_rules": True, "vendor_type": "vendor"}
     assert client.post(f"{API}/seller/start", json=body, headers=headers).status_code == 403

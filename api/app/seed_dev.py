@@ -1,5 +1,6 @@
 """FAKE data for local and staging only. Refuses to run in production. See docs/SEED_ACCOUNTS.md."""
 
+import os
 from datetime import timedelta
 
 from sqlalchemy import select
@@ -79,7 +80,7 @@ def seed_marketplace(db: Session) -> None:
             campus_id=campus.id,
             rules_accepted_at=utcnow(),
             verification_status="verified" if verified else "unverified",
-            trust_level="trusted_seller" if verified else "phone_confirmed",
+            trust_level="trusted_seller" if verified else "email_confirmed",
             confirmed_deals=12 if verified else 0,
             rating_sum=47 if verified else 0,
             rating_count=10 if verified else 0,
@@ -119,8 +120,13 @@ def seed_marketplace(db: Session) -> None:
 
 
 def seed_dev(db: Session) -> None:
-    if get_settings().is_production:
+    settings = get_settings()
+    if settings.is_production:
         raise RuntimeError("seed_dev must never run in production")
+    if not settings.database_url.startswith("sqlite") and os.environ.get("ALLOW_DEV_SEED") != "1":
+        # Fake accounts with a known password must never land in a real PostgreSQL database by accident (for example
+        # a staging rehearsal that points at your real database). Opt in on purpose with ALLOW_DEV_SEED=1.
+        raise RuntimeError("seed_dev only runs on SQLite. Set ALLOW_DEV_SEED=1 to seed a throw-away PostgreSQL database.")
     seed_reference(db)
     mth = db.scalar(select(Location).where(Location.name.like("Madam Tinubu%")))
     for email, name, role, extra in ACCOUNTS:
@@ -128,7 +134,7 @@ def seed_dev(db: Session) -> None:
             continue
         db.add(
             User(
-                email=email, full_name=name, role=role, password_hash=hash_password(PASSWORD), phone_verified=True, onboarded=True, **extra
+                email=email, full_name=name, role=role, password_hash=hash_password(PASSWORD), email_verified=True, onboarded=True, **extra
             )
         )
     db.flush()

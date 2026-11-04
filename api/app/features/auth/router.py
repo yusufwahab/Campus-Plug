@@ -6,26 +6,24 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 
 from app.adapters.email import get_email
-from app.adapters.sms import get_sms
 from app.config import get_settings
 from app.db import utcnow
 from app.deps import DB, CurrentUser
 from app.features.auth.schemas import (
+    EmailCodeIn,
     ForgotIn,
     LoginIn,
     MfaEnrollIn,
     MfaVerifyIn,
     OnboardingIn,
     PasswordChangeIn,
-    PhoneSendIn,
-    PhoneVerifyIn,
     ProfileIn,
     ResetIn,
     SignupIn,
     TokenOut,
     UserOut,
 )
-from app.models.identity import ADMIN_ROLES, Campus, Location, PhoneCode, User, UserPermission
+from app.models.identity import ADMIN_ROLES, Campus, EmailCode, Location, User, UserPermission
 from app.ratelimit import rate_limit
 from app.security import (
     create_token,
@@ -48,16 +46,11 @@ def user_out(db: DB, user: User) -> UserOut:
     return out
 
 
-def _require_local() -> None:
-    if get_settings().auth_provider != "local":
-        raise HTTPException(404, "Sign in is handled by Supabase Auth in this environment.")
-
-
 @router.post(
     "/auth/signup",
     response_model=TokenOut,
     status_code=201,
-    dependencies=[Depends(rate_limit("signup", 10, 3600)), Depends(_require_local)],
+    dependencies=[Depends(rate_limit("signup", 10, 3600))],
 )
 def signup(body: SignupIn, db: DB) -> TokenOut:
     if db.scalar(select(User).where(User.email == body.email.lower())):
@@ -65,10 +58,11 @@ def signup(body: SignupIn, db: DB) -> TokenOut:
     user = User(email=body.email.lower(), password_hash=hash_password(body.password), full_name=body.full_name, phone=body.phone)
     db.add(user)
     db.commit()
+    _send_code(db, user)
     return TokenOut(token=create_token(str(user.id), role=user.role))
 
 
-@router.post("/auth/login", response_model=TokenOut, dependencies=[Depends(rate_limit("login", 10, 300)), Depends(_require_local)])
+@router.post("/auth/login", response_model=TokenOut, dependencies=[Depends(rate_limit("login", 10, 300))])
 def login(body: LoginIn, db: DB) -> TokenOut:
     user = db.scalar(select(User).where(User.email == body.email.lower()))
     if user is None or not verify_password(body.password, user.password_hash) or user.deleted_at is not None:
@@ -94,7 +88,7 @@ def _mfa_user(db: DB, mfa_token: str) -> User:
     return user
 
 
-@router.post("/auth/mfa/enroll", dependencies=[Depends(rate_limit("mfa", 10, 300)), Depends(_require_local)])
+@router.post("/auth/mfa/enroll", dependencies=[Depends(rate_limit("mfa", 10, 300))])
 def mfa_enroll(body: MfaEnrollIn, db: DB) -> dict[str, str]:
     user = _mfa_user(db, body.mfa_token)
     if user.mfa_enabled:
@@ -104,7 +98,7 @@ def mfa_enroll(body: MfaEnrollIn, db: DB) -> dict[str, str]:
     return {"secret": user.mfa_secret, "uri": totp_uri(user.mfa_secret, user.email)}
 
 
-@router.post("/auth/mfa/verify", response_model=TokenOut, dependencies=[Depends(rate_limit("mfa", 10, 300)), Depends(_require_local)])
+@router.post("/auth/mfa/verify", response_model=TokenOut, dependencies=[Depends(rate_limit("mfa", 10, 300))])
 def mfa_verify(body: MfaVerifyIn, db: DB) -> TokenOut:
     user = _mfa_user(db, body.mfa_token)
     if not user.mfa_secret or not verify_totp(user.mfa_secret, body.code):
@@ -114,23 +108,35 @@ def mfa_verify(body: MfaVerifyIn, db: DB) -> TokenOut:
     return TokenOut(token=create_token(str(user.id), role=user.role, aal=2, minutes=60 * 8))
 
 
-@router.post("/auth/phone/send", dependencies=[Depends(rate_limit("phone", 5, 3600))])
-def phone_send(body: PhoneSendIn, user: CurrentUser, db: DB) -> dict[str, str | None]:
+def _send_code(db: DB, user: User) -> str:
+    """Emails a fresh 6-digit code (Brevo in production). Older unused codes stop working."""
+    for old in db.scalars(select(EmailCode).where(EmailCode.user_id == user.id, EmailCode.used.is_(False))):
+        old.used = True
     code = f"{secrets.randbelow(1_000_000):06d}"
-    user.phone = body.phone
-    user.phone_verified = False
-    db.add(PhoneCode(user_id=user.id, phone=body.phone, code_hash=hash_code(code), expires_at=utcnow() + timedelta(minutes=10)))
+    db.add(EmailCode(user_id=user.id, email=user.email, code_hash=hash_code(code), expires_at=utcnow() + timedelta(minutes=10)))
     db.commit()
-    get_sms().send(body.phone, f"Your Campus Plug code is {code}")
+    get_email().send(
+        user.email,
+        "Your Campus Plug code",
+        f"Your Campus Plug code is {code}. It expires in 10 minutes. If you did not ask for it, ignore this email.",
+    )
+    return code
+
+
+@router.post("/auth/email/send", dependencies=[Depends(rate_limit("email-code", 5, 3600))])
+def email_send(user: CurrentUser, db: DB) -> dict[str, str | None]:
+    if user.email_verified:
+        raise HTTPException(409, "Your email address is already confirmed.")
+    code = _send_code(db, user)
     settings = get_settings()
-    # TEST ONLY: lets the full flow run without a real SMS provider. Never enabled in production.
+    # TEST ONLY: lets the full flow run without a real mailbox. Never enabled in production.
     exposed = code if settings.expose_dev_codes and not settings.is_production else None
     return {"status": "sent", "dev_code": exposed}
 
 
-@router.post("/auth/phone/verify", dependencies=[Depends(rate_limit("phone-verify", 10, 3600))])
-def phone_verify(body: PhoneVerifyIn, user: CurrentUser, db: DB) -> dict[str, bool]:
-    row = db.scalar(select(PhoneCode).where(PhoneCode.user_id == user.id, PhoneCode.used.is_(False)).order_by(PhoneCode.id.desc()).limit(1))
+@router.post("/auth/email/verify", dependencies=[Depends(rate_limit("email-verify", 10, 3600))])
+def email_verify(body: EmailCodeIn, user: CurrentUser, db: DB) -> dict[str, bool]:
+    row = db.scalar(select(EmailCode).where(EmailCode.user_id == user.id, EmailCode.used.is_(False)).order_by(EmailCode.id.desc()).limit(1))
     if row is None or row.expires_at < utcnow() or row.attempts >= 5:
         raise HTTPException(400, "That code has expired. Request a new one.")
     row.attempts += 1
@@ -138,9 +144,9 @@ def phone_verify(body: PhoneVerifyIn, user: CurrentUser, db: DB) -> dict[str, bo
         db.commit()
         raise HTTPException(400, "That code is not correct.")
     row.used = True
-    user.phone_verified = True
+    user.email_verified = True
     db.commit()
-    return {"phone_verified": True}
+    return {"email_verified": True}
 
 
 @router.get("/me", response_model=UserOut)
@@ -170,7 +176,7 @@ def onboarding(body: OnboardingIn, user: CurrentUser, db: DB) -> UserOut:
     return user_out(db, user)
 
 
-@router.post("/me/password", status_code=204, dependencies=[Depends(_require_local)])
+@router.post("/me/password", status_code=204)
 def change_password(body: PasswordChangeIn, user: CurrentUser, db: DB) -> None:
     if not verify_password(body.current_password, user.password_hash):
         raise HTTPException(400, "Your current password is not correct.")
@@ -190,7 +196,6 @@ def delete_me(user: CurrentUser, db: DB) -> None:
     user.phone = None
     user.full_name = "Deleted user"
     user.password_hash = None
-    user.auth_id = None
     db.commit()
 
 
@@ -199,14 +204,16 @@ def _reset_fingerprint(user: User) -> str:
     return hash_code(user.password_hash or "")[:16]
 
 
-@router.post("/auth/forgot", dependencies=[Depends(rate_limit("forgot", 5, 3600)), Depends(_require_local)])
+@router.post("/auth/forgot", dependencies=[Depends(rate_limit("forgot", 5, 3600))])
 def forgot_password(body: ForgotIn, db: DB) -> dict[str, str | None]:
     user = db.scalar(select(User).where(User.email == body.email.lower()))
     link_token = None
     if user is not None and user.deleted_at is None:
         link_token = create_token(str(user.id), purpose="reset", minutes=30) + "." + _reset_fingerprint(user)
         get_email().send(
-            user.email, "Reset your Campus Plug password", f"Use this link within 30 minutes: /reset-password?token={link_token}"
+            user.email,
+            "Reset your Campus Plug password",
+            f"Use this link within 30 minutes to choose a new password: {get_settings().web_url.rstrip('/')}/reset-password?token={link_token}",
         )
     settings = get_settings()
     # Same response whether or not the email exists, so accounts cannot be probed.
@@ -214,7 +221,7 @@ def forgot_password(body: ForgotIn, db: DB) -> dict[str, str | None]:
     return {"status": "sent", "dev_token": exposed}
 
 
-@router.post("/auth/reset", status_code=204, dependencies=[Depends(rate_limit("reset", 10, 3600)), Depends(_require_local)])
+@router.post("/auth/reset", status_code=204, dependencies=[Depends(rate_limit("reset", 10, 3600))])
 def reset_password(body: ResetIn, db: DB) -> None:
     jwt_part, _, fingerprint = body.token.rpartition(".")
     try:

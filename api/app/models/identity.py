@@ -33,11 +33,11 @@ class Location(Base):
 class User(Base):
     __tablename__ = "users"
     id: Mapped[int] = mapped_column(primary_key=True)
-    auth_id: Mapped[str | None] = mapped_column(String(64), unique=True)  # Supabase user id
     email: Mapped[str] = mapped_column(String(255), unique=True)
-    password_hash: Mapped[str | None] = mapped_column(String(100))  # local adapter only
+    password_hash: Mapped[str | None] = mapped_column(String(100))
     phone: Mapped[str | None] = mapped_column(String(20), index=True)
-    phone_verified: Mapped[bool] = mapped_column(Boolean, default=False)
+    phone_verified: Mapped[bool] = mapped_column(Boolean, default=False)  # reserved for SMS confirmation; not used for sign-up
+    email_verified: Mapped[bool] = mapped_column(Boolean, default=False)
     full_name: Mapped[str] = mapped_column(String(120))
     role: Mapped[str] = mapped_column(String(12), default="buyer", index=True)
     status: Mapped[str] = mapped_column(String(12), default="active")  # active | suspended | banned
@@ -69,11 +69,13 @@ class UserPermission(Base):
     created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow)
 
 
-class PhoneCode(Base):
-    __tablename__ = "phone_codes"
+class EmailCode(Base):
+    """One-time code emailed to confirm an address. Only a hash is stored."""
+
+    __tablename__ = "email_codes"
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
-    phone: Mapped[str] = mapped_column(String(20))
+    email: Mapped[str] = mapped_column(String(255))
     code_hash: Mapped[str] = mapped_column(String(100))
     expires_at: Mapped[datetime] = mapped_column(UTCDateTime())
     attempts: Mapped[int] = mapped_column(Integer, default=0)

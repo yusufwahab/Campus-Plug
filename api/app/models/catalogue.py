@@ -33,7 +33,7 @@ class Shop(Base):
     location_id: Mapped[int | None] = mapped_column(ForeignKey("locations.id"))
     vendor_type: Mapped[str] = mapped_column(String(10), default="student")
     verification_status: Mapped[str] = mapped_column(String(20), default="unverified")
-    trust_level: Mapped[str] = mapped_column(String(20), default="phone_confirmed")
+    trust_level: Mapped[str] = mapped_column(String(20), default="email_confirmed")
     holiday_mode: Mapped[bool] = mapped_column(Boolean, default=False)
     rules_accepted_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
     payout_bank: Mapped[str | None] = mapped_column(String(60))

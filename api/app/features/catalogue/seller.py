@@ -48,8 +48,8 @@ def my_listing(db: Session, shop: Shop, public_id: str) -> Listing:
 def start_shop(body: ShopStartIn, user: CurrentUser, db: DB) -> SellerOut:
     if not body.accept_rules:
         raise HTTPException(422, "You must accept the seller rules to open a shop.")
-    if not user.phone_verified:
-        raise HTTPException(403, "Confirm your phone number before opening a shop.")
+    if not user.email_verified:
+        raise HTTPException(403, "Confirm your email address before opening a shop.")
     if db.scalar(select(Shop.id).where(Shop.user_id == user.id)):
         raise HTTPException(409, "You already have a shop.")
     if body.vendor_type == "vendor" and not get_setting(db, "allow_vendors"):
@@ -314,5 +314,7 @@ def delete_image(public_id: str, image_id: int, user: SellerUser, db: DB) -> Non
     image = db.get(ListingImage, image_id)
     if image is None or image.listing_id != listing.id:
         raise HTTPException(404, "Image not found")
+    path = image.path
     db.delete(image)
     db.commit()
+    get_storage().delete_public(path)

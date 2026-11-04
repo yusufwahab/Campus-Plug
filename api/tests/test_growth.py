@@ -287,7 +287,7 @@ def test_boost_ends_by_itself(client, h, trade, db):
 
 
 def test_only_own_live_listing_can_be_boosted(client, h, trade, db):
-    h.make_user("other@example.com", phone_verified=True)
+    h.make_user("other@example.com", email_verified=True)
     other = h.login("other@example.com")
     client.post(f"{API}/seller/start", json={"name": "Other Shop", "accept_rules": True}, headers=other)
     res = client.post(f"{API}/seller/boosts", json={"listing_id": trade.listing["public_id"], "days": 3}, headers=other)

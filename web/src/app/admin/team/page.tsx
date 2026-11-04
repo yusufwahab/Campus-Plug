@@ -54,7 +54,7 @@ export default function AdminTeam() {
         ]}
         actions={(m) =>
           m.role === "buyer" || m.role === "seller" ? (
-            <UserButtons user={{ id: m.id, email: m.email, full_name: m.full_name, role: m.role, permissions: m.permissions, status: "active", phone: null, phone_verified: true, campus_id: null, location_id: null, interests: [], onboarded: true, mfa_enabled: false, notify_optional: true }} onAction={setAction} />
+            <UserButtons user={{ id: m.id, email: m.email, full_name: m.full_name, role: m.role, permissions: m.permissions, status: "active", phone: null, email_verified: true, campus_id: null, location_id: null, interests: [], onboarded: true, mfa_enabled: false, notify_optional: true }} onAction={setAction} />
           ) : null
         }
       />

@@ -146,9 +146,9 @@ def export_csv(kind: str, admin: AdminUser, db: DB) -> Response:
     headers: list[str]
     rows: list[list[Any]]
     if kind == "users":
-        headers = ["id", "email", "name", "role", "status", "phone_verified", "created_at"]
+        headers = ["id", "email", "name", "role", "status", "email_verified", "created_at"]
         rows = [
-            [u.id, u.email, u.full_name, u.role, u.status, u.phone_verified, u.created_at]
+            [u.id, u.email, u.full_name, u.role, u.status, u.email_verified, u.created_at]
             for u in db.scalars(select(User).where(User.deleted_at.is_(None)))
         ]
     elif kind == "sellers":

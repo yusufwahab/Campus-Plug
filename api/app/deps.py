@@ -6,10 +6,9 @@ from fastapi import Depends, Header, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.config import get_settings
 from app.db import get_db
 from app.models.identity import ADMIN_ROLES, User, UserPermission
-from app.security import decode_local_token, decode_supabase_token
+from app.security import decode_local_token
 
 DB = Annotated[Session, Depends(get_db)]
 
@@ -19,8 +18,6 @@ def _claims(authorization: str | None) -> dict | None:
         return None
     token = authorization.split(" ", 1)[1]
     try:
-        if get_settings().auth_provider == "supabase":
-            return decode_supabase_token(token)
         claims = decode_local_token(token)
         return claims if claims.get("purpose") == "access" else None
     except jwt.PyJWTError:
@@ -28,14 +25,6 @@ def _claims(authorization: str | None) -> dict | None:
 
 
 def _load_user(db: Session, claims: dict) -> User | None:
-    if get_settings().auth_provider == "supabase":
-        user = db.scalar(select(User).where(User.auth_id == claims["sub"]))
-        if user is None and claims.get("email"):
-            # First sign-in through Supabase Auth: provision the matching profile row as a buyer.
-            user = User(auth_id=claims["sub"], email=claims["email"], full_name=claims["email"].split("@")[0], role="buyer")
-            db.add(user)
-            db.commit()
-        return user
     return db.get(User, int(claims["sub"]))
 
 
@@ -46,8 +35,8 @@ def optional_user(db: DB, authorization: Annotated[str | None, Header()] = None)
     user = _load_user(db, claims)
     if user is None or user.deleted_at is not None or user.status != "active":
         return None
-    # Local tokens carry aal=2 after TOTP; Supabase tokens carry "aal2". Not a mapped column.
-    user.token_aal = 2 if claims.get("aal") in (2, "aal2") else 1  # type: ignore[attr-defined]
+    # Tokens carry aal=2 only after the admin TOTP step. Not a mapped column.
+    user.token_aal = 2 if claims.get("aal") == 2 else 1  # type: ignore[attr-defined]
     return user
 
 
