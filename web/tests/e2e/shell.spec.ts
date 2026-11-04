@@ -93,3 +93,13 @@ test("manifest is served", async ({ request }) => {
   expect(json.display).toBe("standalone");
   expect(json.icons.length).toBeGreaterThanOrEqual(3);
 });
+
+test("the security policy lets photos from Cloudinary load, including through the service worker", async ({ request }) => {
+  const res = await request.get("/");
+  const policy = res.headers()["content-security-policy"] ?? "";
+  const directive = (name: string) => policy.split(";").map((d) => d.trim()).find((d) => d.startsWith(`${name} `)) ?? "";
+  expect(directive("img-src")).toContain("https://res.cloudinary.com"); // <img> tags
+  expect(directive("connect-src")).toContain("https://res.cloudinary.com"); // the service worker fetches images this way
+  expect(directive("frame-ancestors")).toContain("'none'"); // and the rest of the policy is still strict
+  expect(policy).not.toContain("*");
+});

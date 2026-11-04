@@ -33,6 +33,16 @@ npm run dev
 - **Rollback a deploy**: redeploy the previous Render or Vercel release. Migrations are forward only in production; write a new migration to undo a schema change.
 - **Backups**: rely on Supabase point-in-time backups. Test a restore on staging before launch.
 
+## Run the tests on real PostgreSQL (no Docker, no account)
+The default tests use SQLite, which accepts things PostgreSQL rejects. To run them on PostgreSQL 16 that lives only on your computer:
+```
+cd api
+pip install -r requirements-dev.txt
+python scripts/pg_test.py -m alembic upgrade head
+python scripts/pg_test.py -m pytest -q
+```
+The fixtures refuse any database that is not on `127.0.0.1` or `localhost`, so this cannot touch a real database. Last run: all 221 tests pass on PostgreSQL 16.2.
+
 ## Rehearse with real services on your own computer (before deploying)
 Goal: run the real API against real Postgres, Brevo, Cloudinary and Paystack, from `localhost`, without anyone reading your keys.
 

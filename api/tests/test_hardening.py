@@ -145,3 +145,14 @@ def test_a_crash_is_a_json_500_that_still_has_cors_headers_and_is_logged(caplog)
     assert res.headers["access-control-allow-origin"] == "http://localhost:3000"  # so the browser shows the real error, not "CORS"
     assert "hunter2" not in res.text  # nothing about the failure is sent to the client
     assert "Unhandled error on GET /boom" in caplog.text  # but the traceback is in the server log
+
+
+def test_postgres_engines_do_not_use_prepared_statements_but_sqlite_is_untouched(monkeypatch):
+    from app import db as db_module
+
+    seen = {}
+    monkeypatch.setattr(db_module, "create_engine", lambda url, **kw: seen.update(url=url, **kw) or object())
+    db_module.make_engine("postgresql+psycopg://u:p@db.example.com:6543/postgres")
+    assert seen["connect_args"] == {"prepare_threshold": None}  # safe behind a transaction-mode connection pooler
+    db_module.make_engine("sqlite://")
+    assert seen["connect_args"] == {"check_same_thread": False}

@@ -16,7 +16,7 @@ const csp = [
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
   `img-src 'self' data: blob: ${apiOrigin} https://res.cloudinary.com`,
-  `connect-src 'self' ${apiOrigin}`,
+  `connect-src 'self' ${apiOrigin} https://res.cloudinary.com`,
   "worker-src 'self'",
   "manifest-src 'self'",
   "frame-ancestors 'none'",

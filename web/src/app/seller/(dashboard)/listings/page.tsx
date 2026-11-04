@@ -1,5 +1,6 @@
 "use client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { Badge } from "@/components/ui/Badge";
@@ -10,7 +11,7 @@ import { ConfirmModal } from "@/components/ui/Modal";
 import { CardGridSkeleton } from "@/components/ui/Skeleton";
 import { EmptyState, ErrorState } from "@/components/ui/States";
 import { useToast } from "@/components/ui/Toast";
-import { ApiError, api } from "@/lib/api";
+import { ApiError, api, assetUrl } from "@/lib/api";
 import { naira } from "@/lib/format";
 import type { ListingCardData } from "@/lib/types";
 
@@ -52,7 +53,17 @@ export default function SellerListings() {
         <ul className="grid gap-3 md:grid-cols-2">
           {listings.data.map((item) => (
             <li key={item.public_id}>
-              <Card className="space-y-3">
+              <Card className="flex gap-4">
+                <div className="relative size-24 shrink-0 overflow-hidden rounded-input bg-mint md:size-28">
+                  {assetUrl(item.image_url) ? (
+                    <Image src={assetUrl(item.image_url) as string} alt={item.title} fill unoptimized sizes="112px" className="object-cover" />
+                  ) : (
+                    <span aria-hidden="true" className="absolute inset-0 grid place-items-center font-heading text-3xl font-extrabold text-ink/30">
+                      {item.title.charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                </div>
+                <div className="min-w-0 flex-1 space-y-3">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <Link href={`/listing/${item.public_id}`} className="line-clamp-2 font-semibold hover:underline">{item.title}</Link>
@@ -68,6 +79,7 @@ export default function SellerListings() {
                   {item.status === "active" && <Button variant="tertiary" loading={busy} onClick={() => act(item, "status", { status: "sold_out" }, "Marked as sold out")}>Sold out</Button>}
                   {["active", "expired"].includes(item.status) && <Button variant="tertiary" loading={busy} onClick={() => act(item, "still-available", undefined, "Renewed: still available")}>Still available</Button>}
                   <Button variant="danger" onClick={() => setConfirmRemove(item)}>Remove</Button>
+                </div>
                 </div>
               </Card>
             </li>

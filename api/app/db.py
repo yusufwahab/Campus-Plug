@@ -31,6 +31,11 @@ def make_engine(url: str) -> Engine:
     kwargs: dict = {"pool_pre_ping": True}
     if url.startswith("sqlite"):
         kwargs["connect_args"] = {"check_same_thread": False}
+    else:
+        # Poolers such as Supabase's (port 6543) hand one server connection to many clients between transactions, which
+        # breaks prepared statements ("prepared statement ... already exists"). Turning them off is safe on any PostgreSQL.
+        kwargs["connect_args"] = {"prepare_threshold": None}
+        kwargs["pool_recycle"] = 1800
     return create_engine(url, **kwargs)
 
 

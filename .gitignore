@@ -35,3 +35,5 @@ web/public/workbox-*.js
 # Generated email previews
 api/email_previews/
 email_previews/
+api/.pgdata/
+.pgdata/

@@ -18,7 +18,9 @@ Legend: [x] built and the checks listed ran and passed. "Not verified" items are
 ## Evidence (last full run)
 | Check | Result |
 |-------|--------|
-| API `pytest` (SQLite, in-memory, environment pinned) | 207 passed |
+| API `pytest` (SQLite, in-memory, environment pinned) | 221 passed |
+| API `pytest` on real PostgreSQL 16.2 (local, throw-away: `scripts/pg_test.py`) | 221 passed |
+| `alembic upgrade head` and `alembic check` on PostgreSQL 16.2 (migrations 0001 to 0009, including row-level security) | clean |
 | API `ruff check`, `ruff format --check`, `mypy app` | clean |
 | `alembic upgrade head` then `alembic check` (SQLite, through migration 0009) | clean |
 | Web `tsc --noEmit`, `eslint src tests` | clean |
@@ -33,7 +35,7 @@ Legend: [x] built and the checks listed ran and passed. "Not verified" items are
 Each screen size runs against its own freshly seeded database. Every journey runs axe accessibility checks and a horizontal-scroll check.
 
 ## Not verified (never run against the real thing)
-- PostgreSQL (all tests used SQLite), including the row-level-security migration
+- Supabase itself and its connection pooler (the code ran on a local PostgreSQL 16.2, not on Supabase)
 - Brevo email, Paystack payments, web push delivery
 - Render and Vercel deploys (`render.yaml` and `vercel.json` only parse)
 - Cloudinary uploads and private downloads (mock-tested only)
