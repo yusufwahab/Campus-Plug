@@ -1,5 +1,5 @@
 "use client";
-import { Bell, Search, UserCircle } from "lucide-react";
+import { Search, UserCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -9,6 +9,8 @@ import { Logo } from "@/components/ui/Logo";
 import { publicDesktopLinks, publicMobileNav } from "@/lib/nav";
 import { BottomNav } from "./BottomNav";
 import { LocationSelector } from "./LocationSelector";
+import { NotificationBell } from "./NotificationBell";
+import { AnnouncementBanner } from "./AnnouncementBanner";
 import { InstallPrompt } from "./InstallPrompt";
 
 function SearchBox({ className }: { className?: string }) {
@@ -57,9 +59,7 @@ export function PublicShell({ children }: { children: ReactNode }) {
                 <span className="hidden lg:inline">{label}</span>
               </Link>
             ))}
-            <Link href="/notifications" aria-label="Notifications" className="grid size-11 place-items-center rounded-full hover:bg-white">
-              <Bell className="size-5" aria-hidden="true" />
-            </Link>
+            <NotificationBell />
             <Button href="/seller/start" variant="secondary">
               Sell
             </Button>
@@ -76,6 +76,7 @@ export function PublicShell({ children }: { children: ReactNode }) {
         </div>
       </header>
       <main id="main" className="mx-auto w-full max-w-7xl flex-1 px-4 pb-28 pt-4 md:px-6 md:pb-10">
+        <AnnouncementBanner />
         {children}
       </main>
       <InstallPrompt />

@@ -10,6 +10,14 @@ export class ApiError extends Error {
   }
 }
 
+/** Origin of the API (uploads are served from here in test storage). */
+export const API_ORIGIN = BASE.replace(/\/api\/v1$/, "");
+
+export function assetUrl(path: string | null | undefined): string | null {
+  if (!path) return null;
+  return path.startsWith("http") ? path : `${API_ORIGIN}${path}`;
+}
+
 const TOKEN_KEY = "cp_token";
 
 export const tokenStore = {
@@ -49,7 +57,8 @@ export async function api<T>(path: string, { body, token, query, headers, ...ini
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     const detail = (data as { detail?: unknown }).detail;
-    const message = typeof detail === "string" ? detail : "Request failed";
+    const first = Array.isArray(detail) ? (detail[0] as { msg?: string } | undefined)?.msg : undefined;
+    const message = typeof detail === "string" ? detail : (first?.replace(/^Value error, /, "") ?? "Request failed");
     throw new ApiError(res.status, message, (data as { code?: string }).code);
   }
   return data as T;

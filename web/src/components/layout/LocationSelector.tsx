@@ -1,7 +1,7 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
 import { MapPin } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
@@ -13,18 +13,27 @@ type Campus = { id: number; slug: string; name: string };
 type Location = { id: number; name: string; campus_id: number };
 
 const KEY = "cp_place";
+const EVENT = "cp-place-change";
 export const DEFAULT_PLACE: Place = { campusSlug: "unilag", campusName: "UNILAG", locationId: null, locationName: "All of campus" };
 
+function subscribe(callback: () => void) {
+  window.addEventListener(EVENT, callback);
+  window.addEventListener("storage", callback);
+  return () => {
+    window.removeEventListener(EVENT, callback);
+    window.removeEventListener("storage", callback);
+  };
+}
+const snapshot = () => window.localStorage.getItem(KEY) ?? "";
+const serverSnapshot = () => "";
+
+/** The visitor's campus and hall, shared by every component through localStorage plus a change event. */
 export function usePlace() {
-  const [place, setPlaceState] = useState<Place>(DEFAULT_PLACE);
-  useEffect(() => {
-    const raw = window.localStorage.getItem(KEY);
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrate from localStorage after mount
-    if (raw) setPlaceState(JSON.parse(raw) as Place);
-  }, []);
+  const raw = useSyncExternalStore(subscribe, snapshot, serverSnapshot);
+  const place = useMemo<Place>(() => (raw ? (JSON.parse(raw) as Place) : DEFAULT_PLACE), [raw]);
   const setPlace = (p: Place) => {
     window.localStorage.setItem(KEY, JSON.stringify(p));
-    setPlaceState(p);
+    window.dispatchEvent(new Event(EVENT));
   };
   return [place, setPlace] as const;
 }

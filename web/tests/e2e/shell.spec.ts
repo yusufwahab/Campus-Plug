@@ -1,17 +1,30 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
+import { login, loginAdmin } from "./helpers";
 
 const noHorizontalScroll = async (page: import("@playwright/test").Page) => {
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow).toBeLessThanOrEqual(0);
 };
 
-for (const path of ["/", "/design", "/seller", "/admin", "/offline", "/access-denied", "/does-not-exist"]) {
+for (const path of ["/", "/design", "/offline", "/access-denied", "/does-not-exist"]) {
   test(`no horizontal scroll: ${path}`, async ({ page }) => {
     await page.goto(path);
     await noHorizontalScroll(page);
   });
 }
+
+test("no horizontal scroll: signed-in dashboards", async ({ page }) => {
+  await login(page, "seller.verified@example.com", "/seller");
+  await expect(page.getByRole("heading", { name: "Seller overview" })).toBeVisible();
+  await noHorizontalScroll(page);
+});
+
+test("no horizontal scroll: admin", async ({ page }) => {
+  await loginAdmin(page);
+  await expect(page.getByRole("heading", { name: "Admin overview" })).toBeVisible();
+  await noHorizontalScroll(page);
+});
 
 test("public navigation adapts to the viewport", async ({ page }, info) => {
   await page.goto("/");
@@ -29,7 +42,8 @@ test("public navigation adapts to the viewport", async ({ page }, info) => {
 });
 
 test("seller dashboard: bottom bar on mobile, rail/sidebar otherwise", async ({ page }, info) => {
-  await page.goto("/seller");
+  await login(page, "seller.verified@example.com", "/seller");
+  await expect(page.getByRole("heading", { name: "Seller overview" })).toBeVisible();
   if (info.project.name === "mobile") {
     await expect(page.getByRole("navigation", { name: "Seller mobile" })).toBeVisible();
     await page.getByRole("button", { name: "More" }).click();

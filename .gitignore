@@ -21,3 +21,13 @@ _legacy_lovable/
 .DS_Store
 next-env.d.ts
 tsconfig.tsbuildinfo
+.pytest_tmp/
+uploads/
+
+# Generated
+web/e2e-*.log
+web/public/sw.js
+web/public/sw.js.map
+web/public/swe-worker-*.js
+web/public/workbox-*.js
+*.log

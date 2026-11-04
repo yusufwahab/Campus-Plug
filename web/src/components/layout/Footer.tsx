@@ -3,7 +3,7 @@ import { Logo } from "@/components/ui/Logo";
 
 const columns = [
   { title: "Campus Plug", links: [["How it works", "/how-it-works"], ["Start selling", "/sell"], ["Help", "/help"], ["Contact", "/contact"]] },
-  { title: "Trust", links: [["Seller rules", "/seller-rules"], ["Terms", "/terms"], ["Privacy", "/privacy"]] },
+  { title: "Trust", links: [["Seller rules", "/seller-rules"], ["Banned items", "/banned-items"], ["Terms", "/terms"], ["Privacy", "/privacy"]] },
 ] as const;
 
 export function Footer() {

@@ -1,0 +1,40 @@
+# Render blueprint: the API and the cron job that runs scheduled work (payouts, auto-confirm, reminders, boost expiry).
+# Secrets are marked sync: false, so Render asks for them in the dashboard. Nothing secret is stored in this file.
+services:
+  - type: web
+    name: campus-plug-api
+    runtime: python
+    rootDir: api
+    plan: starter
+    region: frankfurt
+    buildCommand: pip install -r requirements.txt
+    preDeployCommand: alembic upgrade head
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT --proxy-headers
+    healthCheckPath: /healthz
+    envVars: &env
+      - { key: PYTHON_VERSION, value: 3.12.7 }
+      - { key: APP_ENV, value: production }
+      - { key: AUTH_PROVIDER, value: supabase }
+      - { key: PAYMENT_PROVIDER, value: paystack }
+      - { key: EXPOSE_DEV_CODES, value: "false" }
+      - { key: DATABASE_URL, sync: false }
+      - { key: JWT_SECRET, generateValue: true }
+      - { key: SUPABASE_URL, sync: false }
+      - { key: SUPABASE_JWT_SECRET, sync: false }
+      - { key: SUPABASE_SERVICE_KEY, sync: false }
+      - { key: PAYSTACK_SECRET_KEY, sync: false }
+      - { key: CORS_ORIGINS, sync: false }
+      - { key: WEB_URL, sync: false }
+      - { key: VAPID_PRIVATE_KEY, sync: false }
+      - { key: VAPID_PUBLIC_KEY, sync: false }
+      - { key: VAPID_SUBJECT, sync: false }
+  - type: cron
+    name: campus-plug-jobs
+    runtime: python
+    rootDir: api
+    plan: starter
+    region: frankfurt
+    schedule: "*/5 * * * *"
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m app.jobs.run_due
+    envVars: *env
