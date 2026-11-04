@@ -1,6 +1,6 @@
 "use client";
 import clsx from "clsx";
-import { Menu } from "lucide-react";
+import { Menu, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -22,6 +22,7 @@ type Props = {
  */
 export function DashboardShell({ kind, children }: Props) {
   const title = kind === "seller" ? "Seller" : "Admin";
+  const admin = kind === "admin";
   const items = kind === "seller" ? sellerNav : adminNav;
   const mobileHrefs = kind === "seller" ? sellerMobileHrefs : undefined;
   const pathname = usePathname();
@@ -44,7 +45,7 @@ export function DashboardShell({ kind, children }: Props) {
                 className={clsx(
                   "flex min-h-11 items-center rounded-full text-sm font-semibold",
                   variant === "rail" ? "flex-col justify-center gap-0.5 rounded-2xl px-1 py-2 text-[10px]" : "gap-3 px-4",
-                  active ? "bg-lime text-ink" : "text-ink hover:bg-white",
+                  active ? "bg-lime text-ink" : admin ? "text-white/85 hover:bg-white/10 hover:text-white" : "text-ink hover:bg-white",
                 )}
               >
                 <Icon className="size-5 shrink-0" aria-hidden="true" />
@@ -58,9 +59,20 @@ export function DashboardShell({ kind, children }: Props) {
 
   return (
     <div className="min-h-dvh md:flex">
-      <aside className="sticky top-0 hidden h-dvh w-24 shrink-0 overflow-y-auto border-r border-line bg-ground p-2 md:block lg:w-64 lg:p-4">
+      <aside
+        className={clsx(
+          "sticky top-0 hidden h-dvh w-24 shrink-0 overflow-y-auto border-r p-2 md:block lg:w-64 lg:p-4",
+          admin ? "border-forest bg-forest" : "border-line bg-ground",
+        )}
+      >
         <div className="mb-4 hidden lg:block">
-          <Logo />
+          <Logo tone={admin ? "light" : "dark"} />
+          {admin && (
+            <p className="ml-1 mt-1 inline-flex items-center gap-1.5 rounded-full bg-lime px-3 py-1 text-xs font-extrabold uppercase tracking-wide text-forest">
+              <ShieldCheck className="size-3.5" aria-hidden="true" />
+              Admin console
+            </p>
+          )}
         </div>
         <nav aria-label={`${title} navigation`} className="lg:hidden">
           {list("rail")}
@@ -70,13 +82,24 @@ export function DashboardShell({ kind, children }: Props) {
         </nav>
       </aside>
       <div className="min-w-0 flex-1">
-        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-line bg-ground/95 px-4 py-2 backdrop-blur md:hidden">
-          <Logo />
+        <header
+          className={clsx(
+            "sticky top-0 z-30 flex items-center justify-between border-b px-4 py-2 backdrop-blur md:hidden",
+            admin ? "border-forest bg-forest text-white" : "border-line bg-ground/95",
+          )}
+        >
+          <Logo tone={admin ? "light" : "dark"} />
           <button type="button" onClick={() => setDrawer(true)} className="inline-flex min-h-11 items-center gap-2 rounded-full px-3 text-sm font-semibold" aria-label={mobileHrefs ? "More" : "Open menu"}>
             <Menu className="size-5" aria-hidden="true" />
             {mobileHrefs ? "More" : "Menu"}
           </button>
         </header>
+        {admin && (
+          <div role="note" className="flex items-center gap-2 border-b border-lime/60 bg-lime/30 px-4 py-2 text-xs font-semibold text-forest md:px-6 md:text-sm">
+            <ShieldCheck className="size-4 shrink-0" aria-hidden="true" />
+            Admin console. Every action you take here is recorded with your name, the time and your reason.
+          </div>
+        )}
         <main id="main" className="mx-auto w-full max-w-6xl px-4 pb-28 pt-4 md:px-6 md:pb-10 md:pt-6">
           {children}
         </main>

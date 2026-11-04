@@ -10,6 +10,7 @@ from sqlalchemy import func, or_, select
 from app.audit import log_admin_action
 from app.deps import DB, AdminUser
 from app.models.catalogue import Listing, SearchLog, Shop
+from app.models.commerce import LedgerEntry, Order, Payment, Payout
 from app.models.identity import ADMIN_ROLES, User, UserPermission
 from app.models.system import ActivityLog
 from app.models.trust import Report, VerificationSubmission
@@ -165,6 +166,36 @@ def export_csv(kind: str, admin: AdminUser, db: DB) -> Response:
     elif kind == "activity-log":
         headers = ["id", "created_at", "actor_id", "action", "target_type", "target_id", "reason"]
         rows = [[x.id, x.created_at, x.actor_id, x.action, x.target_type, x.target_id, x.reason] for x in db.scalars(select(ActivityLog))]
+    elif kind == "orders":
+        headers = [
+            "order_id", "status", "protected", "item_paid_kobo", "delivery_fee_kobo", "buyer_total_kobo",
+            "commission_bps", "commission_kobo", "seller_amount_kobo", "provider_fee_kobo", "created_at", "paid_at",
+        ]  # fmt: skip
+        rows = [
+            [
+                o.public_id, o.status, o.protected, o.item_paid_kobo, o.delivery_fee_kobo, o.buyer_total_kobo,
+                o.commission_bps, o.commission_kobo, o.seller_amount_kobo, o.provider_fee_kobo, o.created_at, o.paid_at,
+            ]
+            for o in db.scalars(select(Order).order_by(Order.id))
+        ]  # fmt: skip
+    elif kind == "payments":
+        headers = ["reference", "order_id", "provider", "status", "amount_kobo", "fee_kobo", "created_at", "paid_at"]
+        rows = [
+            [p.reference, p.order_id, p.provider, p.status, p.amount_kobo, p.fee_kobo, p.created_at, p.paid_at]
+            for p in db.scalars(select(Payment).order_by(Payment.id))
+        ]
+    elif kind == "payouts":
+        headers = ["payout_id", "order_id", "shop_id", "amount_kobo", "status", "hold_reason", "created_at", "paid_at"]
+        rows = [
+            [x.id, x.order_id, x.shop_id, x.amount_kobo, x.status, x.hold_reason, x.created_at, x.paid_at]
+            for x in db.scalars(select(Payout).order_by(Payout.id))
+        ]
+    elif kind == "ledger":
+        headers = ["entry_id", "group_id", "order_id", "kind", "account", "amount_kobo", "ref", "created_at"]
+        rows = [
+            [e.id, e.group_id, e.order_id, e.kind, e.account, e.amount_kobo, e.ref, e.created_at]
+            for e in db.scalars(select(LedgerEntry).order_by(LedgerEntry.id))
+        ]
     else:
         raise HTTPException(404, "Unknown export")
     log_admin_action(db, admin, "export.csv", "export", kind, reason=f"Exported {len(rows)} rows")

@@ -13,6 +13,10 @@ const exportsList = [
   { kind: "listings", title: "Listings", body: "All listings with status, price and views." },
   { kind: "searches", title: "Searches", body: "Every search including ones with no results." },
   { kind: "activity-log", title: "Activity log", body: "Every Admin action with who, when and why." },
+  { kind: "orders", title: "Orders", body: "Every order with amounts, commission and status (amounts in kobo)." },
+  { kind: "payments", title: "Payments", body: "Every payment with its provider reference and fee." },
+  { kind: "payouts", title: "Payouts", body: "Every seller payout with its status and any hold reason." },
+  { kind: "ledger", title: "Ledger", body: "The full double-entry money ledger, one row per movement." },
 ];
 
 export default function AdminExports() {

@@ -499,3 +499,39 @@ def test_non_admin_cannot_reach_any_admin_endpoint(client, h):
             res = client.request(method.upper(), concrete, headers=headers, json={})
             assert res.status_code == 403, f"{method.upper()} {path} returned {res.status_code} for a non-admin"
             assert client.request(method.upper(), concrete, json={}).status_code == 401, f"{method.upper()} {path} open to guests"
+
+
+# ---- warnings and financial exports -----------------------------------------------------------------------------------
+
+
+def test_admin_can_warn_a_user_who_is_told_why_and_stays_active(client, h, db):
+    from app.models.social import Notification
+
+    h.make_user("boss@example.com", role="admin", email_verified=True)
+    target = h.make_user("student@example.com")
+    boss = h.login("boss@example.com")
+    res = client.post(f"{API}/admin/users/{target.id}/warn", json={"reason": "Misleading photos on a listing"}, headers=boss)
+    assert res.status_code == 200 and res.json()["status"] == "active"
+    note = db.query(Notification).filter_by(user_id=target.id, kind="account.warning").one()
+    assert "Misleading photos" in note.body
+    listed = client.get(f"{API}/admin/users/{target.id}/warnings", headers=boss).json()
+    assert [w["reason"] for w in listed] == ["Misleading photos on a listing"]
+    log = client.get(f"{API}/admin/activity-log", params={"action": "user.warned"}, headers=boss).json()
+    assert log["items"][0]["reason"] == "Misleading photos on a listing"
+
+
+def test_warning_rules(client, h):
+    h.make_user("boss@example.com", role="admin", email_verified=True)
+    h.make_user("boss2@example.com", role="admin", email_verified=True)
+    target = h.make_user("student@example.com")
+    boss = h.login("boss@example.com")
+    boss_row = h.db.query(type(target)).filter_by(email="boss@example.com").one()
+    other_admin = h.db.query(type(target)).filter_by(email="boss2@example.com").one()
+    assert (
+        client.post(f"{API}/admin/users/{target.id}/warn", json={"reason": "no"}, headers=boss).status_code == 422
+    )  # a real reason is required
+    assert client.post(f"{API}/admin/users/{boss_row.id}/warn", json={"reason": "Testing"}, headers=boss).status_code == 422
+    assert client.post(f"{API}/admin/users/{other_admin.id}/warn", json={"reason": "Testing"}, headers=boss).status_code == 422
+    assert client.post(f"{API}/admin/users/9999/warn", json={"reason": "Testing"}, headers=boss).status_code == 404
+    student = h.login("student@example.com")
+    assert client.post(f"{API}/admin/users/{target.id}/warn", json={"reason": "Testing"}, headers=student).status_code == 403

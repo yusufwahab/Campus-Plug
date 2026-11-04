@@ -9,6 +9,8 @@ from app.deps import DB, AdminUser
 from app.features.auth.router import user_out
 from app.features.auth.schemas import UserOut
 from app.models.identity import PERMISSIONS, User, UserPermission
+from app.models.system import ActivityLog
+from app.notify import notify
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -94,3 +96,38 @@ def set_status(user_id: int, body: StatusIn, admin: AdminUser, db: DB) -> UserOu
     user.status = body.status
     db.commit()
     return user_out(db, user)
+
+
+class WarnIn(BaseModel):
+    reason: str = Field(min_length=3, max_length=500)
+
+
+class WarningOut(BaseModel):
+    created_at: str
+    reason: str
+
+
+@router.post("/users/{user_id}/warn", response_model=UserOut)
+def warn_user(user_id: int, body: WarnIn, admin: AdminUser, db: DB) -> UserOut:
+    """A formal warning: the person is told why (in the app and by email), and it is kept on their record. The account stays active."""
+    user = db.get(User, user_id)
+    if user is None or user.deleted_at is not None:
+        raise HTTPException(404, "User not found")
+    if user.id == admin.id:
+        raise HTTPException(422, "You cannot warn yourself.")
+    if user.role in ("admin", "super_admin"):
+        raise HTTPException(422, "Admins cannot be warned here.")
+    log_admin_action(db, admin, "user.warned", "user", user.id, reason=body.reason)
+    notify(db, user.id, "account.warning", "A warning about your account", body.reason, "/account")
+    db.commit()
+    return user_out(db, user)
+
+
+@router.get("/users/{user_id}/warnings", response_model=list[WarningOut])
+def user_warnings(user_id: int, admin: AdminUser, db: DB) -> list[WarningOut]:
+    rows = db.scalars(
+        select(ActivityLog)
+        .where(ActivityLog.action == "user.warned", ActivityLog.target_type == "user", ActivityLog.target_id == str(user_id))
+        .order_by(ActivityLog.id.desc())
+    )
+    return [WarningOut(created_at=r.created_at.isoformat(), reason=r.reason) for r in rows]

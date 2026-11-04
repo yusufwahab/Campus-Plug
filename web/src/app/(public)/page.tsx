@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import { Sparkles } from "lucide-react";
 import Link from "next/link";
-import { ListingGrid } from "@/components/listing/ListingCard";
+import { ListingRail } from "@/components/listing/ListingCard";
 import { NearYou } from "@/components/listing/NearYou";
 import { Section } from "@/components/listing/Section";
 import { Button } from "@/components/ui/Button";
@@ -58,18 +58,18 @@ export default async function HomePage() {
       ) : (
         <>
           {feed.open_now.length > 0 && (
-            <Section title="Open now" href="/search?open_now=true">
-              <ListingGrid items={feed.open_now.slice(0, 5)} />
+            <Section title="Open now" subtitle="Services you can book right now" href="/search?open_now=true">
+              <ListingRail items={feed.open_now.slice(0, 5)} />
             </Section>
           )}
-          <Section title="Near you" href="/search">
+          <Section title="Near you" subtitle="Sellers closest to your hall" href="/search">
             <NearYou />
           </Section>
-          <Section title="New listings" href="/search?sort=newest">
-            <ListingGrid items={feed.new.slice(0, 10)} />
+          <Section title="New listings" subtitle="Fresh from sellers on your campus" href="/search?sort=newest">
+            <ListingRail items={feed.new.slice(0, 10)} />
           </Section>
-          <Section title="Popular" href="/search">
-            <ListingGrid items={feed.popular.slice(0, 5)} />
+          <Section title="Popular" subtitle="What other students are looking at" href="/search">
+            <ListingRail items={feed.popular.slice(0, 5)} />
           </Section>
         </>
       )}

@@ -17,6 +17,7 @@ type User = components["schemas"]["UserOut"];
 export default function AdminUserDetail() {
   const { id } = useParams<{ id: string }>();
   const user = useApiQuery<User>(["admin-user", id], `/admin/users/${id}`);
+  const warnings = useApiQuery<{ created_at: string; reason: string }[]>(["admin-user", id, "warnings"], `/admin/users/${id}/warnings`);
   const [action, setAction] = useState<UserAction | null>(null);
   const act = useAction([["admin-user"], ["admin-users"]]);
   const copy = action ? userActionCopy(action) : null;
@@ -50,6 +51,21 @@ export default function AdminUserDetail() {
         <div className="mt-5 flex flex-wrap gap-2">
           <UserButtons user={u} onAction={setAction} />
         </div>
+      </Card>
+      <Card className="mt-4">
+        <h2 className="text-lg font-bold">Warnings on record ({warnings.data?.length ?? 0})</h2>
+        {warnings.data && warnings.data.length > 0 ? (
+          <ul className="mt-2 space-y-2 text-sm">
+            {warnings.data.map((w) => (
+              <li key={w.created_at} className="rounded-input bg-ground p-3">
+                <span className="text-muted">{new Date(w.created_at).toLocaleString("en-NG")}</span>
+                <p>{w.reason}</p>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-1 text-sm text-muted">No warnings yet.</p>
+        )}
       </Card>
       {copy && action && (
         <ReasonModal open title={copy.title} description={copy.description} confirmLabel={copy.confirm} destructive={copy.destructive} onConfirm={(reason) => runUserAction(act, action, reason)} onClose={() => setAction(null)} />

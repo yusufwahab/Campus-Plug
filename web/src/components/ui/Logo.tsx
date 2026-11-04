@@ -11,11 +11,11 @@ export function LogoMark({ className = "size-9" }: { className?: string }) {
   );
 }
 
-export function Logo({ href = "/" }: { href?: string }) {
+export function Logo({ href = "/", tone = "dark" }: { href?: string; tone?: "dark" | "light" }) {
   return (
     <Link href={href} className="inline-flex min-h-11 items-center gap-2" aria-label="Campus Plug home">
       <LogoMark />
-      <span className="font-heading text-lg font-extrabold tracking-tight">Campus Plug</span>
+      <span className={tone === "light" ? "font-heading text-lg font-extrabold tracking-tight text-white" : "font-heading text-lg font-extrabold tracking-tight"}>Campus Plug</span>
     </Link>
   );
 }

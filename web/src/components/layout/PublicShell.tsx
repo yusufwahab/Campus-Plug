@@ -1,11 +1,12 @@
 "use client";
-import { Search, UserCircle } from "lucide-react";
+import { Search, ShieldCheck, UserCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/Button";
 import { Logo } from "@/components/ui/Logo";
+import { useMe } from "@/lib/auth";
 import { publicDesktopLinks, publicMobileNav } from "@/lib/nav";
 import { BottomNav } from "./BottomNav";
 import { LocationSelector } from "./LocationSelector";
@@ -43,6 +44,8 @@ function SearchBox({ className }: { className?: string }) {
 }
 
 export function PublicShell({ children }: { children: ReactNode }) {
+  const me = useMe();
+  const isAdmin = me.data?.role === "admin" || me.data?.role === "super_admin";
   return (
     <div className="flex min-h-dvh flex-col">
       <header className="sticky top-0 z-30 border-b border-line bg-ground/95 backdrop-blur">
@@ -60,9 +63,16 @@ export function PublicShell({ children }: { children: ReactNode }) {
               </Link>
             ))}
             <NotificationBell />
-            <Button href="/seller/start" variant="secondary">
-              Sell
-            </Button>
+            {isAdmin ? (
+              <Button href="/admin">
+                <ShieldCheck className="size-4" aria-hidden="true" />
+                Admin
+              </Button>
+            ) : (
+              <Button href="/seller/start" variant="secondary">
+                Sell
+              </Button>
+            )}
             <Link href="/account" aria-label="Account" className="grid size-11 place-items-center rounded-full border-2 border-ink">
               <UserCircle className="size-5" aria-hidden="true" />
             </Link>

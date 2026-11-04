@@ -264,3 +264,37 @@ test("admin suspension asks for a reason and signs the user out", async ({ page,
   await expect(page).toHaveURL(/login/);
   await admin.ctx.close();
 });
+
+test("the admin console is its own place, and a warning reaches the user", async ({ page, browser }) => {
+  const email = await signup(page, "towarn");
+  await confirmEmail(page);
+  const admin = await otherRole(browser, page, "admin");
+  await expect(admin.page).toHaveURL(/\/admin$/);
+  await expect(admin.page.getByRole("note")).toContainText("Every action you take here is recorded");
+
+  // From the customer site an admin has a clear way back to the console.
+  await admin.page.goto("/account");
+  await admin.page.getByRole("link", { name: "Open Admin console" }).click();
+  await expect(admin.page).toHaveURL(/\/admin$/);
+
+  await admin.page.goto("/admin/users");
+  await admin.page.getByLabel("Search name, email or phone").fill(email);
+  await expect(admin.page.getByText(email).filter({ visible: true }).first()).toBeVisible();
+  const scope = admin.page.viewportSize()!.width < 768 ? admin.page.getByRole("listitem").filter({ hasText: email }) : admin.page.getByRole("row").filter({ hasText: email });
+  await scope.getByRole("button", { name: "Warn" }).click();
+  const modal = admin.page.getByRole("dialog");
+  await modal.getByRole("button", { name: "Send warning" }).click();
+  await expect(modal.getByRole("alert")).toContainText("short reason");
+  await modal.getByLabel("Reason").fill("Misleading photos on a listing");
+  await modal.getByRole("button", { name: "Send warning" }).click();
+  await expect(admin.page.getByText("Warning sent")).toBeVisible();
+
+  await page.goto("/notifications");
+  await expect(page.getByText("Misleading photos on a listing").first()).toBeVisible(); // told why
+  await page.goto("/account");
+  await expect(page.getByRole("heading", { name: "Account" })).toBeVisible(); // still signed in: a warning is not a suspension
+
+  await admin.page.goto("/admin/exports");
+  for (const title of ["Orders", "Payments", "Payouts", "Ledger"]) await expect(admin.page.getByRole("heading", { name: title })).toBeVisible();
+  await admin.ctx.close();
+});

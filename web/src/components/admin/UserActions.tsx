@@ -5,11 +5,12 @@ import type { useAction } from "@/lib/hooks";
 
 type User = components["schemas"]["UserOut"];
 
-export type UserAction = { user: User; kind: "suspended" | "banned" | "active" | "verifier" | "hall_rep" | "remove-verifier" | "remove-hall_rep" };
+export type UserAction = { user: User; kind: "warn" | "suspended" | "banned" | "active" | "verifier" | "hall_rep" | "remove-verifier" | "remove-hall_rep" };
 
 export function userActionCopy(a: UserAction) {
   const name = a.user.full_name;
   switch (a.kind) {
+    case "warn": return { title: `Warn ${name}?`, description: "They are told why, in the app and by email, and the warning is kept on their record. Their account stays active.", confirm: "Send warning", destructive: false };
     case "suspended": return { title: `Suspend ${name}?`, description: "They are signed out and cannot sign in until you reactivate them.", confirm: "Suspend", destructive: true };
     case "banned": return { title: `Ban ${name}?`, description: "They are signed out and cannot sign in. Use this for serious or repeated violations.", confirm: "Ban", destructive: true };
     case "active": return { title: `Reactivate ${name}?`, description: "They can sign in again.", confirm: "Reactivate", destructive: false };
@@ -22,7 +23,9 @@ export function userActionCopy(a: UserAction) {
 
 export async function runUserAction(act: ReturnType<typeof useAction>, a: UserAction, reason: string) {
   const id = a.user.id;
-  if (a.kind === "suspended" || a.kind === "banned" || a.kind === "active") {
+  if (a.kind === "warn") {
+    await act("POST", `/admin/users/${id}/warn`, { reason }, "Warning sent");
+  } else if (a.kind === "suspended" || a.kind === "banned" || a.kind === "active") {
     await act("POST", `/admin/users/${id}/status`, { status: a.kind, reason }, "Account updated");
   } else {
     const permission = a.kind.replace("remove-", "") as "verifier" | "hall_rep";
@@ -36,6 +39,7 @@ export function UserButtons({ user, onAction }: { user: User; onAction: (a: User
     <>
       {user.status === "active" ? (
         <>
+          {!isAdmin && <Button variant="tertiary" onClick={() => onAction({ user, kind: "warn" })}>Warn</Button>}
           <Button variant="tertiary" onClick={() => onAction({ user, kind: "suspended" })}>Suspend</Button>
           <Button variant="danger" onClick={() => onAction({ user, kind: "banned" })}>Ban</Button>
         </>

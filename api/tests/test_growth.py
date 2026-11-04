@@ -389,3 +389,24 @@ def test_admin_and_seller_analytics(client, h, trade, db):
     assert s["listing_views"] >= 2 and s["confirmed_deals"] == 1 and s["top_listings"]
     assert client.get(f"{API}/admin/analytics", headers=trade.buyer_headers).status_code == 403
     assert client.get(f"{API}/seller/analytics", headers=trade.buyer_headers).status_code == 403
+
+
+def test_admin_can_export_financial_records_as_csv_and_every_export_is_logged(client, h, trade, db):
+    import csv
+    import io
+
+    oid = trade.paid_order()
+    boss = admin(client, h)
+    for kind, needle in (("orders", oid), ("payments", "CP"), ("payouts", None), ("ledger", "payment_received")):
+        res = client.get(f"{API}/admin/exports/{kind}.csv", headers=boss)
+        assert res.status_code == 200 and res.headers["content-type"].startswith("text/csv"), kind
+        rows = list(csv.reader(io.StringIO(res.text)))
+        assert len(rows) >= 1 and "amount_kobo" in ",".join(rows[0]) or kind == "orders", kind
+        if needle:
+            assert needle in res.text, kind
+    orders = list(csv.DictReader(io.StringIO(client.get(f"{API}/admin/exports/orders.csv", headers=boss).text)))
+    assert orders[0]["order_id"] == oid and orders[0]["commission_kobo"] == str(2_000 * NAIRA)
+    log = client.get(f"{API}/admin/activity-log", params={"action": "export.csv"}, headers=boss).json()
+    assert len(log["items"]) >= 5
+    assert client.get(f"{API}/admin/exports/orders.csv", headers=trade.buyer_headers).status_code == 403
+    assert client.get(f"{API}/admin/exports/nonsense.csv", headers=boss).status_code == 404

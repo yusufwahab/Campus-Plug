@@ -84,6 +84,15 @@ function Account() {
   return (
     <div className="mx-auto max-w-2xl space-y-4">
       <h1 className="text-3xl font-extrabold">Account</h1>
+      {(user.role === "admin" || user.role === "super_admin") && (
+        <Card className="flex flex-wrap items-center justify-between gap-3 bg-forest text-white">
+          <div>
+            <p className="font-heading text-lg font-extrabold">Admin console</p>
+            <p className="text-sm text-white/80">Manage users, sellers, listings, orders, payments and platform settings.</p>
+          </div>
+          <Button href="/admin">Open Admin console</Button>
+        </Card>
+      )}
       <Card className="flex flex-wrap items-center gap-2">
         <span className="font-semibold">{user.email}</span>
         <Badge tone={user.email_verified ? "verified" : "pending"}>{user.email_verified ? "Email confirmed" : "Email not confirmed"}</Badge>
