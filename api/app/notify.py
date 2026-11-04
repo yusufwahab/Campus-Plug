@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.adapters.email import get_email
 from app.adapters.push import get_push
 from app.adapters.sms import get_sms
+from app.email_templates import notification_email
 from app.jobs.core import enqueue, handler
 from app.models.identity import User
 from app.models.social import Notification, PushSubscription
@@ -50,6 +51,7 @@ def deliver(db: Session, payload: dict) -> None:
         if not push.send(sub.endpoint, sub.p256dh, sub.auth, note.title, note.body, note.url):
             db.delete(sub)
     if note.essential:
-        get_email().send(user.email, note.title, f"{note.body}\n\nOpen: {note.url}")
+        message = notification_email(note.title, note.body, note.url)
+        get_email().send(user.email, message.subject, message.text, message.html)
         if user.phone and user.phone_verified and get_setting(db, "sms_enabled"):
             get_sms().send(user.phone, f"{note.title}. {note.body}"[:300])

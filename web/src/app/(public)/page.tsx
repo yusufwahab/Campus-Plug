@@ -6,7 +6,7 @@ import { NearYou } from "@/components/listing/NearYou";
 import { Section } from "@/components/listing/Section";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/States";
-import { serverApi } from "@/lib/server-api";
+import { serverApiOrNull } from "@/lib/server-api";
 import type { components } from "@/lib/api-schema";
 
 export const dynamic = "force-dynamic";
@@ -18,7 +18,11 @@ type Feed = { open_now: Card[]; new: Card[]; popular: Card[] };
 const tints: Record<string, string> = { peach: "bg-peach", lilac: "bg-lilac", sky: "bg-sky", butter: "bg-butter", mint: "bg-mint" };
 
 export default async function HomePage() {
-  const [categories, feed] = await Promise.all([serverApi<Category[]>("/categories"), serverApi<Feed>("/home?campus=unilag")]);
+  const [categoryList, feedData] = await Promise.all([serverApiOrNull<Category[]>("/categories"), serverApiOrNull<Feed>("/home?campus=unilag")]);
+  // If the API is down or still waking up, keep the page up and say so, instead of a full error page.
+  const unavailable = categoryList === null || feedData === null;
+  const categories = categoryList ?? [];
+  const feed: Feed = feedData ?? { open_now: [], new: [], popular: [] };
   const empty = !feed.new.length;
 
   return (
@@ -47,7 +51,9 @@ export default async function HomePage() {
         </ul>
       </nav>
 
-      {empty ? (
+      {unavailable ? (
+        <EmptyState title="We could not load listings just now" body="The marketplace is taking a moment to respond. Refresh in a few seconds." action={{ label: "Try again", href: "/" }} />
+      ) : empty ? (
         <EmptyState title="No listings yet" body="Be the first to list something on your campus." action={{ label: "Start selling", href: "/seller/start" }} />
       ) : (
         <>

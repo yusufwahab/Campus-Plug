@@ -8,6 +8,7 @@ import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import { AuthCard, FormError } from "@/components/auth/AuthCard";
 import { Button } from "@/components/ui/Button";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 import { Input } from "@/components/ui/Field";
 import { ApiError, api, tokenStore } from "@/lib/api";
 import { safeNext } from "@/lib/safe-next";
@@ -42,7 +43,7 @@ function SignupForm() {
         <Input label="Full name" autoComplete="name" error={errors.full_name?.message} {...form.register("full_name")} />
         <Input label="Email" type="email" autoComplete="email" error={errors.email?.message} {...form.register("email")} />
         <Input label="Phone number" type="tel" autoComplete="tel" hint="Your number stays hidden from other users until you both agree to share it." error={errors.phone?.message} {...form.register("phone")} />
-        <Input label="Password" type="password" autoComplete="new-password" hint="At least 8 characters." error={errors.password?.message} {...form.register("password")} />
+        <PasswordInput label="Password" autoComplete="new-password" hint="At least 8 characters." error={errors.password?.message} {...form.register("password")} />
         <FormError message={error} />
         <Button type="submit" className="w-full" loading={form.formState.isSubmitting}>
           Create account

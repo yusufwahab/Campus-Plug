@@ -9,6 +9,7 @@ from app.adapters.email import get_email
 from app.config import get_settings
 from app.db import utcnow
 from app.deps import DB, CurrentUser
+from app.email_templates import code_email, reset_email
 from app.features.auth.schemas import (
     EmailCodeIn,
     ForgotIn,
@@ -115,11 +116,8 @@ def _send_code(db: DB, user: User) -> str:
     code = f"{secrets.randbelow(1_000_000):06d}"
     db.add(EmailCode(user_id=user.id, email=user.email, code_hash=hash_code(code), expires_at=utcnow() + timedelta(minutes=10)))
     db.commit()
-    get_email().send(
-        user.email,
-        "Your Campus Plug code",
-        f"Your Campus Plug code is {code}. It expires in 10 minutes. If you did not ask for it, ignore this email.",
-    )
+    message = code_email(code)
+    get_email().send(user.email, message.subject, message.text, message.html)
     return code
 
 
@@ -210,11 +208,9 @@ def forgot_password(body: ForgotIn, db: DB) -> dict[str, str | None]:
     link_token = None
     if user is not None and user.deleted_at is None:
         link_token = create_token(str(user.id), purpose="reset", minutes=30) + "." + _reset_fingerprint(user)
-        get_email().send(
-            user.email,
-            "Reset your Campus Plug password",
-            f"Use this link within 30 minutes to choose a new password: {get_settings().web_url.rstrip('/')}/reset-password?token={link_token}",
-        )
+        link = f"{get_settings().web_url.rstrip('/')}/reset-password?token={link_token}"
+        message = reset_email(link)
+        get_email().send(user.email, message.subject, message.text, message.html)
     settings = get_settings()
     # Same response whether or not the email exists, so accounts cannot be probed.
     exposed = link_token if settings.expose_dev_codes and not settings.is_production else None

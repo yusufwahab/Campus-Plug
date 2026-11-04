@@ -29,6 +29,7 @@ import pyotp  # noqa: E402
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 from sqlalchemy import create_engine  # noqa: E402
+from sqlalchemy.engine import make_url  # noqa: E402
 from sqlalchemy.orm import sessionmaker  # noqa: E402
 from sqlalchemy.pool import StaticPool  # noqa: E402
 
@@ -41,14 +42,29 @@ from app.ratelimit import reset_limits  # noqa: E402
 from app.security import hash_password  # noqa: E402
 
 
+def _test_engine():
+    """SQLite in memory by default. Set TEST_DATABASE_URL to run the same tests on a throw-away local PostgreSQL."""
+    url = os.environ.get("TEST_DATABASE_URL")
+    if not url:
+        return create_engine("sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool)
+    host = make_url(url).host
+    # Safety: these tests drop and recreate every table, so they may only ever touch a database on this computer.
+    assert host in ("127.0.0.1", "localhost", "::1"), "TEST_DATABASE_URL must point at a local, throw-away database"
+    engine = create_engine(url)
+    Base.metadata.drop_all(engine)
+    return engine
+
+
 @pytest.fixture()
 def db():
-    engine = create_engine("sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool)
+    engine = _test_engine()
     Base.metadata.create_all(engine)
     session = sessionmaker(bind=engine, expire_on_commit=False)()
     seed_reference(session)
     yield session
     session.close()
+    if os.environ.get("TEST_DATABASE_URL"):
+        Base.metadata.drop_all(engine)
     engine.dispose()
 
 

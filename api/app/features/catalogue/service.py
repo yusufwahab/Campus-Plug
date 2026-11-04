@@ -62,12 +62,20 @@ def seller_out(db: Session, shop: Shop) -> SellerOut:
 def first_images(db: Session, listing_ids: list[int]) -> dict[int, str]:
     if not listing_ids:
         return {}
-    rows = db.execute(
-        select(ListingImage.listing_id, func.min(ListingImage.position), ListingImage.path)
+    # The first photo of each listing. Selecting `path` next to MIN(position) in one GROUP BY works on SQLite only;
+    # PostgreSQL rejects it, so find each listing's lowest position first and then read that row.
+    first = (
+        select(ListingImage.listing_id.label("listing_id"), func.min(ListingImage.position).label("position"))
         .where(ListingImage.listing_id.in_(listing_ids))
         .group_by(ListingImage.listing_id)
+        .subquery()
+    )
+    rows = db.execute(
+        select(ListingImage.listing_id, ListingImage.path).join(
+            first, (ListingImage.listing_id == first.c.listing_id) & (ListingImage.position == first.c.position)
+        )
     ).all()
-    return {listing_id: public_url(path) for listing_id, _pos, path in rows}
+    return {listing_id: public_url(path) for listing_id, path in rows}
 
 
 def cards(db: Session, listings: list[Listing], sponsored_ids: set[int] | None = None) -> list[ListingCard]:

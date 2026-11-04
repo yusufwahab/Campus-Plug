@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import { AuthCard, FormError } from "@/components/auth/AuthCard";
 import { Button } from "@/components/ui/Button";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 import { Input } from "@/components/ui/Field";
 import { useToast } from "@/components/ui/Toast";
 import { ApiError, api } from "@/lib/api";
@@ -41,7 +42,7 @@ function ResetForm() {
   return (
     <AuthCard title="Choose a new password">
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" noValidate>
-        <Input label="New password" type="password" autoComplete="new-password" error={form.formState.errors.new_password?.message} {...form.register("new_password")} />
+        <PasswordInput label="New password" autoComplete="new-password" error={form.formState.errors.new_password?.message} {...form.register("new_password")} />
         <FormError message={error} />
         <Button type="submit" className="w-full" loading={form.formState.isSubmitting}>
           Update password

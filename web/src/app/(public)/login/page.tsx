@@ -8,6 +8,7 @@ import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import { AuthCard, FormError } from "@/components/auth/AuthCard";
 import { Button } from "@/components/ui/Button";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 import { Input } from "@/components/ui/Field";
 import { ApiError, api, tokenStore } from "@/lib/api";
 import { codeSchema, loginSchema } from "@/lib/schemas";
@@ -90,7 +91,7 @@ function LoginForm() {
     <AuthCard title="Welcome back" subtitle="Sign in to chat, order and sell.">
       <form onSubmit={creds.handleSubmit(onCreds)} className="space-y-4" noValidate>
         <Input label="Email" type="email" autoComplete="email" error={creds.formState.errors.email?.message} {...creds.register("email")} />
-        <Input label="Password" type="password" autoComplete="current-password" error={creds.formState.errors.password?.message} {...creds.register("password")} />
+        <PasswordInput label="Password" autoComplete="current-password" error={creds.formState.errors.password?.message} {...creds.register("password")} />
         <FormError message={error} />
         <Button type="submit" className="w-full" loading={creds.formState.isSubmitting}>
           Sign in

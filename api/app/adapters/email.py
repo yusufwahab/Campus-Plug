@@ -11,16 +11,18 @@ logger = logging.getLogger("campusplug.email")
 
 
 class EmailSender(Protocol):
-    def send(self, to: str, subject: str, body: str) -> None: ...
+    def send(self, to: str, subject: str, body: str, html: str | None = None) -> None: ...
 
 
 class LocalEmail:
     """TEST ADAPTER. Keeps messages in memory; never contacts a real mailbox."""
 
     outbox: list[tuple[str, str, str]] = []
+    html_outbox: list[str] = []
 
-    def send(self, to: str, subject: str, body: str) -> None:
+    def send(self, to: str, subject: str, body: str, html: str | None = None) -> None:
         self.outbox.append((to, subject, body))
+        self.html_outbox.append(html or "")
         logger.info("local-email queued (not sent)")
 
 
@@ -35,13 +37,15 @@ class BrevoEmail:
     def __init__(self, api_key: str, sender_email: str, sender_name: str) -> None:
         self.api_key, self.sender_email, self.sender_name = api_key, sender_email, sender_name
 
-    def send(self, to: str, subject: str, body: str) -> None:
+    def send(self, to: str, subject: str, body: str, html: str | None = None) -> None:
         payload = {
             "sender": {"email": self.sender_email, "name": self.sender_name},
             "to": [{"email": to}],
             "subject": subject,
             "textContent": body,
         }
+        if html:
+            payload["htmlContent"] = html
         try:
             res = httpx.post(self.URL, json=payload, headers={"api-key": self.api_key, "accept": "application/json"}, timeout=10.0)
         except httpx.HTTPError:

@@ -31,21 +31,24 @@ function Wrap({ id, label, error, hint, children }: Common & { id: string; child
 
 const describe = (id: string, error?: string, hint?: string) => (error ? `${id}-e` : hint ? `${id}-h` : undefined);
 
-export const Input = forwardRef<HTMLInputElement, Common & InputHTMLAttributes<HTMLInputElement>>(function Input(
-  { label, error, hint, className, ...rest },
+export const Input = forwardRef<HTMLInputElement, Common & InputHTMLAttributes<HTMLInputElement> & { trailing?: ReactNode }>(function Input(
+  { label, error, hint, className, trailing, ...rest },
   ref,
 ) {
   const id = useId();
   return (
     <Wrap id={id} label={label} error={error} hint={hint}>
-      <input
-        id={id}
-        ref={ref}
-        aria-invalid={!!error}
-        aria-describedby={describe(id, error, hint)}
-        className={clsx(control, error && "border-danger-fg", className)}
-        {...rest}
-      />
+      <div className="relative">
+        <input
+          id={id}
+          ref={ref}
+          aria-invalid={!!error}
+          aria-describedby={describe(id, error, hint)}
+          className={clsx(control, error && "border-danger-fg", trailing && "pr-12", className)}
+          {...rest}
+        />
+        {trailing && <div className="absolute inset-y-0 right-0 flex items-center">{trailing}</div>}
+      </div>
     </Wrap>
   );
 });

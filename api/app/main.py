@@ -1,5 +1,8 @@
+import logging
+
 from fastapi import APIRouter, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.adapters.storage import UPLOAD_ROOT
@@ -25,11 +28,24 @@ from app.features.verification import rep
 from app.features.verification import router as verification
 
 API_PREFIX = "/api/v1"
+logger = logging.getLogger("campusplug.api")
 
 
 def create_app() -> FastAPI:
     settings = get_settings()
     app = FastAPI(title="Campus Plug API", version="0.1.0", docs_url=None if settings.is_production else "/docs")
+
+    # Registered BEFORE the CORS middleware so it sits inside it. An unhandled crash then becomes an ordinary JSON 500 that
+    # still carries the CORS headers (otherwise the browser reports a misleading "blocked by CORS" instead of the real error),
+    # and the full traceback goes to the server log. No detail about the failure is sent to the client.
+    @app.middleware("http")
+    async def catch_unhandled(request: Request, call_next):  # type: ignore[no-untyped-def]
+        try:
+            return await call_next(request)
+        except Exception:
+            logger.exception("Unhandled error on %s %s", request.method, request.url.path)
+            return JSONResponse({"detail": "Something went wrong on our side. Please try again."}, status_code=500)
+
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[o.strip() for o in settings.cors_origins.split(",") if o.strip()],

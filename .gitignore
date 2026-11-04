@@ -31,3 +31,7 @@ web/public/sw.js.map
 web/public/swe-worker-*.js
 web/public/workbox-*.js
 *.log
+
+# Generated email previews
+api/email_previews/
+email_previews/

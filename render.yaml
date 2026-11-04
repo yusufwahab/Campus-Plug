@@ -12,7 +12,7 @@ services:
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT --proxy-headers
     healthCheckPath: /healthz
     envVars: &env
-      - { key: PYTHON_VERSION, value: 3.12.7 }
+      - { key: PYTHON_VERSION, value: 3.12.9 }
       - { key: APP_ENV, value: production }
       - { key: PAYMENT_PROVIDER, value: paystack }
       - { key: EMAIL_PROVIDER, value: brevo }

@@ -27,7 +27,7 @@ export function totp(secret: string, now = Date.now()): string {
 export async function login(page: Page, email: string, next?: string) {
   await page.goto(next ? `/login?next=${encodeURIComponent(next)}` : "/login");
   await page.getByLabel("Email").fill(email);
-  await page.getByLabel("Password").fill(PASSWORD);
+  await page.getByLabel("Password", { exact: true }).fill(PASSWORD);
   await page.getByRole("button", { name: "Sign in" }).click();
   // Wait for the session to be stored: either we leave /login, or the admin two-step prompt appears.
   await Promise.race([
@@ -50,7 +50,7 @@ export async function signup(page: Page, label: string) {
   await page.getByLabel("Full name").fill("Test " + label);
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Phone number").fill("08031234567");
-  await page.getByLabel("Password").fill(PASSWORD);
+  await page.getByLabel("Password", { exact: true }).fill(PASSWORD);
   await page.getByRole("button", { name: "Create account" }).click();
   await page.waitForURL(/verify-email/);
   return email;

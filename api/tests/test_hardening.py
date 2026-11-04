@@ -124,3 +124,24 @@ def test_email_provider_is_chosen_from_settings(monkeypatch):
     finally:
         monkeypatch.undo()
         get_settings.cache_clear()
+
+
+def test_a_crash_is_a_json_500_that_still_has_cors_headers_and_is_logged(caplog):
+    from fastapi.testclient import TestClient
+
+    from app.main import create_app
+
+    app = create_app()
+
+    @app.get("/boom")
+    def boom() -> None:
+        raise RuntimeError("database exploded: password=hunter2")
+
+    client = TestClient(app, raise_server_exceptions=False)
+    with caplog.at_level("ERROR", logger="campusplug.api"):
+        res = client.get("/boom", headers={"Origin": "http://localhost:3000"})
+    assert res.status_code == 500
+    assert res.json() == {"detail": "Something went wrong on our side. Please try again."}
+    assert res.headers["access-control-allow-origin"] == "http://localhost:3000"  # so the browser shows the real error, not "CORS"
+    assert "hunter2" not in res.text  # nothing about the failure is sent to the client
+    assert "Unhandled error on GET /boom" in caplog.text  # but the traceback is in the server log

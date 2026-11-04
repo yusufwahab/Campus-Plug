@@ -10,6 +10,7 @@ import { FormError } from "@/components/auth/AuthCard";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 import { Input } from "@/components/ui/Field";
 import { ConfirmModal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
@@ -113,8 +114,8 @@ function Account() {
       <Card>
         <h2 className="text-lg font-bold">Security</h2>
         <form onSubmit={password.handleSubmit(savePassword)} className="mt-3 space-y-3" noValidate>
-          <Input label="Current password" type="password" autoComplete="current-password" error={password.formState.errors.current_password?.message} {...password.register("current_password")} />
-          <Input label="New password" type="password" autoComplete="new-password" error={password.formState.errors.new_password?.message} {...password.register("new_password")} />
+          <PasswordInput label="Current password" autoComplete="current-password" error={password.formState.errors.current_password?.message} {...password.register("current_password")} />
+          <PasswordInput label="New password" autoComplete="new-password" error={password.formState.errors.new_password?.message} {...password.register("new_password")} />
           <FormError message={passwordError} />
           <Button type="submit" variant="secondary" loading={password.formState.isSubmitting}>
             Change password

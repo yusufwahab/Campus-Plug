@@ -12,7 +12,7 @@ test("guest is sent to sign in and returned afterwards", async ({ page }) => {
 test("wrong password shows an inline error", async ({ page }) => {
   await page.goto("/login");
   await page.getByLabel("Email").fill("buyer1@example.com");
-  await page.getByLabel("Password").fill("not-the-password");
+  await page.getByLabel("Password", { exact: true }).fill("not-the-password");
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page.getByRole("alert").filter({ hasText: "incorrect" })).toBeVisible();
 });
@@ -44,11 +44,11 @@ test("password reset journey", async ({ page }) => {
   await page.getByLabel("Email").fill(email);
   await page.getByRole("button", { name: "Send reset link" }).click();
   await page.getByRole("link", { name: "open the reset link" }).click();
-  await page.getByLabel("New password").fill("a-brand-new-pass");
+  await page.getByLabel("New password", { exact: true }).fill("a-brand-new-pass");
   await page.getByRole("button", { name: "Update password" }).click();
   await expect(page).toHaveURL(/\/login/);
   await page.getByLabel("Email").fill(email);
-  await page.getByLabel("Password").fill("a-brand-new-pass");
+  await page.getByLabel("Password", { exact: true }).fill("a-brand-new-pass");
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page).toHaveURL(/\/$/);
 });
@@ -82,3 +82,18 @@ for (const path of ["/login", "/signup", "/forgot-password"]) {
     expect(results.violations).toEqual([]);
   });
 }
+
+test("password fields can be shown and hidden", async ({ page }) => {
+  for (const path of ["/login", "/signup"]) {
+    await page.goto(path);
+    const field = page.getByLabel("Password", { exact: true });
+    await field.fill("my-secret-pass");
+    await expect(field).toHaveAttribute("type", "password"); // hidden by default
+    await page.getByRole("button", { name: "Show password" }).click();
+    await expect(field).toHaveAttribute("type", "text");
+    await expect(page.getByRole("button", { name: "Hide password" })).toHaveAttribute("aria-pressed", "true");
+    await page.getByRole("button", { name: "Hide password" }).click();
+    await expect(field).toHaveAttribute("type", "password");
+    await expect(field).toHaveValue("my-secret-pass"); // toggling never clears what was typed
+  }
+});
